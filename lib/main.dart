@@ -1,6 +1,7 @@
 import 'package:bend_ultimate_flutter/ultimate_event/event.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -20,42 +21,43 @@ class MyApp extends StatelessWidget {
           // Check for errors
           if (snapshot.hasError) {
             print(snapshot.error);
+            return Center(child: ErrorWidget.withDetails());
           }
 
-          // Once complete, show your application
+          // Once complete, show application
           if (snapshot.connectionState == ConnectionState.done) {
             return MaterialApp(
               title: 'Bend Ultimate',
               theme: ThemeData(
                 primarySwatch: Colors.blue,
               ),
-              home: MyHomePage(title: 'Bend Ultimate Home'),
+              home: HomepageCalendar(title: 'Bend Ultimate Calendar'),
             );
           }
           return Center(child: CircularProgressIndicator());
-        }
-    );
+        });
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
+class HomepageCalendar extends StatefulWidget {
   final String title;
 
+  HomepageCalendar({
+    Key key,
+    this.title,
+  }) : super(key: key);
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomepageCalendarState createState() => _HomepageCalendarState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  CollectionReference _events;
+class _HomepageCalendarState extends State<HomepageCalendar> with TickerProviderStateMixin {
   List<dynamic> _allEvents;
-  List<dynamic> _selectedEvents;
-  Map<DateTime, List<dynamic>> _mapEvents = Map<DateTime, List<dynamic>>();
+  List<dynamic> _selectedEvents = [];
+  Event _specificEvent;
+  Map<DateTime, List<Event>> _mapEvents = Map<DateTime, List<Event>>();
   AnimationController _animationController;
   CalendarController _calendarController;
-
 
   @override
   void initState() {
@@ -64,14 +66,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     FirebaseFirestore.instance.collection('events').get().then((querySnapshot) {
       _allEvents = querySnapshot.docs;
       _allEvents.forEach((event) {
-        DateTime time = event.data()['time'];
-        print(time);
+        DateTime time = event.data()['time'].toDate();
         if (_mapEvents.containsKey(time)) {
-          List<dynamic> oldList = _mapEvents[time];
+          print(_mapEvents[time]);
+          List<Event> oldList = _mapEvents[time];
           oldList.add(event.data());
           _mapEvents.update(time, (events) => oldList);
         } else {
-          _mapEvents[time] = event.data();
+          _mapEvents[time] = [Event.fromJson(event.data())];
         }
       });
     });
@@ -119,13 +121,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           const SizedBox(height: 8.0),
           _buildButtons(),
           const SizedBox(height: 8.0),
-          Expanded(child: _buildEventList()),
+          if (_selectedEvents.isNotEmpty) Expanded(child: _buildEventList()),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            print('Create event');
+          }
       ),
     );
   }
 
   Widget _buildTableCalendar() {
+    print(_mapEvents.length);
     return TableCalendar(
       calendarController: _calendarController,
       events: _mapEvents,
@@ -228,7 +236,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildButtons() {
-    final dateTime = _mapEvents.keys.elementAt(_mapEvents.length - 1);
+    // print(_mapEvents.length);
+    // var test = _mapEvents.length == 1 ? _mapEvents.keys.elementAt(_mapEvents.length) : _mapEvents.keys.elementAt(_mapEvents.length - 1);
+    // print('_buildButtons: ' + test.toString());
+    // final dateTime = _mapEvents.keys.elementAt(_mapEvents.length - 1);
+    final dateTime = DateTime.now();
 
     return Column(
       children: <Widget>[
@@ -289,8 +301,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 margin:
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(
-                  title: Text(event.toString()),
-                  onTap: () => print('$event tapped!'),
+                  title: Text('Ultimate'),
+                  onTap: () => print('Display event details'),
                 ),
               ))
           .toList(),
