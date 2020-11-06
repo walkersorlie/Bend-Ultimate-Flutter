@@ -1,41 +1,57 @@
-import 'package:bend_ultimate_flutter/ultimate_event/event.dart';
+import 'package:bend_ultimate_flutter/controllers/bindings/event_binding.dart';
+import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
+import 'package:bend_ultimate_flutter/screens/ultimate_event_details_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 void main() {
   runApp(MyApp());
 }
 
+
 class MyApp extends StatelessWidget {
   final Future<FirebaseApp> _initialization = Firebase.initializeApp();
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: _initialization,
-        builder: (context, snapshot) {
-          // Check for errors
-          if (snapshot.hasError) {
-            print(snapshot.error);
-            return Center(child: ErrorWidget.withDetails());
-          }
+      // Initialize FlutterFire:
+      future: _initialization,
+      builder: (context, snapshot) {
+        // Check for errors
+        if (snapshot.hasError) {
+          return Center(child: ErrorWidget.withDetails(error: snapshot.error));
+        }
 
-          // Once complete, show application
-          if (snapshot.connectionState == ConnectionState.done) {
-            return MaterialApp(
-              title: 'Bend Ultimate',
-              theme: ThemeData(
-                primarySwatch: Colors.blue,
+        // Once complete, show your application
+        if (snapshot.connectionState == ConnectionState.done) {
+          return GetMaterialApp(
+            initialRoute: '/',
+            unknownRoute: GetPage(
+              name: '/404',
+              page: () => UnknownScreen(),
+            ),
+            getPages: [
+              GetPage(
+                name: '/',
+                page: () => HomepageCalendar(title: 'Calendar'),
+                binding: EventBinding(),
               ),
-              home: HomepageCalendar(title: 'Bend Ultimate Calendar'),
-            );
-          }
-          return Center(child: CircularProgressIndicator());
-        });
+              GetPage(
+                name: '/details/:id',
+                page: () => UltimateEventDetailsScreen(),
+                binding: EventBinding(),
+              )
+            ]
+          );
+        }
+
+        // Otherwise, show something whilst waiting for initialization to complete
+        return Center(child: CircularProgressIndicator());
+      },
+    );
   }
 }
 
@@ -51,33 +67,17 @@ class HomepageCalendar extends StatefulWidget {
   _HomepageCalendarState createState() => _HomepageCalendarState();
 }
 
-class _HomepageCalendarState extends State<HomepageCalendar> with TickerProviderStateMixin {
-  List<dynamic> _allEvents;
-  List<dynamic> _selectedEvents = [];
-  Event _specificEvent;
-  Map<DateTime, List<Event>> _mapEvents = Map<DateTime, List<Event>>();
+class _HomepageCalendarState extends State<HomepageCalendar>
+    with TickerProviderStateMixin {
+
   AnimationController _animationController;
   CalendarController _calendarController;
+  final EventController controller = Get.find<EventController>();
+
 
   @override
   void initState() {
     super.initState();
-
-    FirebaseFirestore.instance.collection('events').get().then((querySnapshot) {
-      _allEvents = querySnapshot.docs;
-      _allEvents.forEach((event) {
-        DateTime time = event.data()['time'].toDate();
-        if (_mapEvents.containsKey(time)) {
-          print(_mapEvents[time]);
-          List<Event> oldList = _mapEvents[time];
-          oldList.add(event.data());
-          _mapEvents.update(time, (events) => oldList);
-        } else {
-          _mapEvents[time] = [Event.fromJson(event.data())];
-        }
-      });
-    });
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -96,17 +96,21 @@ class _HomepageCalendarState extends State<HomepageCalendar> with TickerProvider
   void _onDaySelected(DateTime day, List events) {
     print('CALLBACK: _onDaySelected');
     setState(() {
-      _selectedEvents = events;
+      print('_onDaySelected: ' + events.length.toString());
+      controller.selectedEvents = events;
     });
   }
 
-  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
+  void _onVisibleDaysChanged(
+      DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onVisibleDaysChanged');
   }
 
-  void _onCalendarCreated(DateTime first, DateTime last, CalendarFormat format) {
+  void _onCalendarCreated(
+      DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onCalendarCreated');
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -121,22 +125,22 @@ class _HomepageCalendarState extends State<HomepageCalendar> with TickerProvider
           const SizedBox(height: 8.0),
           _buildButtons(),
           const SizedBox(height: 8.0),
-          if (_selectedEvents.isNotEmpty) Expanded(child: _buildEventList()),
+          // if (_selectedEvents.isNotEmpty) Expanded(child: _buildEventList()),
+          if (controller.selectedEvents.isNotEmpty)
+            SelectedEvents(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            print('Create event');
-          }
-      ),
+      floatingActionButton: FloatingActionButton(onPressed: () {
+        print('Create event');
+      }),
     );
   }
 
   Widget _buildTableCalendar() {
-    print(_mapEvents.length);
+    print(controller.mapEvents.length);
     return TableCalendar(
       calendarController: _calendarController,
-      events: _mapEvents,
+      events: controller.mapEvents,
       initialCalendarFormat: CalendarFormat.month,
       formatAnimation: FormatAnimation.slide,
       startingDayOfWeek: StartingDayOfWeek.sunday,
@@ -203,7 +207,7 @@ class _HomepageCalendarState extends State<HomepageCalendar> with TickerProvider
       ),
       onDaySelected: (date, events, holidays) {
         _onDaySelected(date, events);
-        _animationController.forward(from: 0.0);
+        // _animationController.forward(from: 0.0);
       },
       onVisibleDaysChanged: _onVisibleDaysChanged,
       onCalendarCreated: _onCalendarCreated,
@@ -289,10 +293,20 @@ class _HomepageCalendarState extends State<HomepageCalendar> with TickerProvider
       ],
     );
   }
+}
+
+class SelectedEvents extends GetView<EventController> {
+
+  SelectedEvents({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: _buildEventList());
+  }
 
   Widget _buildEventList() {
     return ListView(
-      children: _selectedEvents
+      children: controller.selectedEvents
           .map((event) => Container(
                 decoration: BoxDecoration(
                   border: Border.all(width: 0.8),
@@ -302,10 +316,26 @@ class _HomepageCalendarState extends State<HomepageCalendar> with TickerProvider
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(
                   title: Text('Ultimate'),
-                  onTap: () => print('Display event details'),
+                  subtitle: Text(event.location),
+                  onTap: () => {
+                    controller.selectedEvent = event,
+                    Get.toNamed('/details/${event.id}'),
+                  },
                 ),
               ))
           .toList(),
+    );
+  }
+}
+
+class UnknownScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Text('404!'),
+      ),
     );
   }
 }
