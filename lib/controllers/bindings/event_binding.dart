@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 class EventBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<EventController>(() => EventController());
+    Get.put<EventController>(EventController());
   }
-
 }

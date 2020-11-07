@@ -1,6 +1,7 @@
 import 'package:bend_ultimate_flutter/controllers/bindings/event_binding.dart';
 import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
 import 'package:bend_ultimate_flutter/screens/ultimate_event_details_screen.dart';
+import 'package:bend_ultimate_flutter/screens/unknown_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.done) {
           return GetMaterialApp(
             initialRoute: '/',
+            initialBinding: EventBinding(),
             unknownRoute: GetPage(
               name: '/404',
               page: () => UnknownScreen(),
@@ -125,7 +127,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
           const SizedBox(height: 8.0),
           _buildButtons(),
           const SizedBox(height: 8.0),
-          // if (_selectedEvents.isNotEmpty) Expanded(child: _buildEventList()),
           if (controller.selectedEvents.isNotEmpty)
             SelectedEvents(),
         ],
@@ -328,14 +329,3 @@ class SelectedEvents extends GetView<EventController> {
   }
 }
 
-class UnknownScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: Center(
-        child: Text('404!'),
-      ),
-    );
-  }
-}

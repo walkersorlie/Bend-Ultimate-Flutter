@@ -1,7 +1,7 @@
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Firestore {
+class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<bool> createEvent(UltimateEvent event) async {
@@ -12,7 +12,7 @@ class Firestore {
         'attendees': event.attendees,
       });
       return true;
-    } catch(e) {
+    } catch (e) {
       print(e);
       return false;
     }
@@ -20,9 +20,10 @@ class Firestore {
 
   Future<UltimateEvent> getSelectedEvent(String id) async {
     try {
-      QueryDocumentSnapshot doc = await _firestore.collection('events').doc(id).get();
+      QueryDocumentSnapshot doc =
+          await _firestore.collection('events').doc(id).get();
       return UltimateEvent.fromDocumentSnapshot(doc);
-    } catch(e) {
+    } catch (e) {
       print(e);
       rethrow;
     }
@@ -31,10 +32,16 @@ class Firestore {
   Future<List<UltimateEvent>> getAllEvents() async {
     try {
       QuerySnapshot docs = await _firestore.collection('events').get();
-      return docs.docs.map((event) => UltimateEvent.fromDocumentSnapshot(event)).toList();
-    } catch(e) {
+      return docs.docs
+          .map((event) => UltimateEvent.fromDocumentSnapshot(event))
+          .toList();
+    } catch (e) {
       print(e);
       rethrow;
     }
+  }
+
+  Stream<QuerySnapshot> getEventsCollectionStream() {
+    return _firestore.collection('events').snapshots();
   }
 }

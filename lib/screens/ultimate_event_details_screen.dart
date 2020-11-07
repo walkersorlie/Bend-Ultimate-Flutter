@@ -1,5 +1,4 @@
 import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
-import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
