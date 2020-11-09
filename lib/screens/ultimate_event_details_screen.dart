@@ -3,12 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class UltimateEventDetailsScreen extends GetView<EventController> {
-
-  UltimateEventDetailsScreen({
-    Key key,
-  }) : super(key: key);
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,8 +15,32 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
             if (controller.selectedEvent != null) ...[
               Text(controller.selectedEvent.location),
               Text(controller.selectedEvent.time.toString()),
+              Text('Attendees:'),
+              _displayAttendeesList(),
             ],
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Add/remove name',
+        onPressed: () => print('Edit attendees list'),
+        child: Icon(Icons.edit),
+      ),
+    );
+  }
+
+  Widget _displayAttendeesList() {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(1.0),
+        child: ListView(
+        children: controller.selectedEvent.attendees
+            .map((attendee) => Container(
+                  child: ListTile(
+                    title: Text(attendee),
+                  ),
+                ))
+            .toList(),
         ),
       ),
     );

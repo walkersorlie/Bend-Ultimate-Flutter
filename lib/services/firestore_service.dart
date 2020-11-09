@@ -6,7 +6,7 @@ class FirestoreService {
 
   Future<bool> createEvent(UltimateEvent event) async {
     try {
-      await _firestore.collection('events').doc(event.id).set({
+      await _firestore.collection('events').add({
         'location': event.location,
         'time': Timestamp.fromDate(event.time),
         'attendees': event.attendees,

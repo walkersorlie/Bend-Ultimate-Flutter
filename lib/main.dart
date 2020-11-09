@@ -1,5 +1,8 @@
 import 'package:bend_ultimate_flutter/controllers/bindings/event_binding.dart';
+import 'package:bend_ultimate_flutter/controllers/bindings/event_form_binding.dart';
 import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
+import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
+import 'package:bend_ultimate_flutter/screens/create_ultimate_event_screen.dart';
 import 'package:bend_ultimate_flutter/screens/ultimate_event_details_screen.dart';
 import 'package:bend_ultimate_flutter/screens/unknown_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -42,7 +45,12 @@ class MyApp extends StatelessWidget {
                 binding: EventBinding(),
               ),
               GetPage(
-                name: '/details/:id',
+                name: '/events/create',
+                page: () => CreateUltimateEventScreen(),
+                binding: EventFormBinding(),
+              ),
+              GetPage(
+                name: '/events/details/:id',
                 page: () => UltimateEventDetailsScreen(),
                 binding: EventBinding(),
               )
@@ -98,8 +106,10 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   void _onDaySelected(DateTime day, List events) {
     print('CALLBACK: _onDaySelected');
     setState(() {
-      print('_onDaySelected: ' + events.length.toString());
-      controller.selectedEvents = events;
+      if (events.isEmpty)
+        controller.selectedEvents = <UltimateEvent>[];
+      else
+        controller.selectedEvents = events;
     });
   }
 
@@ -131,9 +141,11 @@ class _HomepageCalendarState extends State<HomepageCalendar>
             SelectedEvents(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () {
-        print('Create event');
-      }),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Create event',
+        onPressed: () => Get.toNamed('/events/create'),
+        child: Icon(Icons.add),
+      ),
     );
   }
 
@@ -320,7 +332,7 @@ class SelectedEvents extends GetView<EventController> {
                   subtitle: Text(event.location),
                   onTap: () => {
                     controller.selectedEvent = event,
-                    Get.toNamed('/details/${event.id}'),
+                    Get.toNamed('/events/details/${event.id}'),
                   },
                 ),
               ))

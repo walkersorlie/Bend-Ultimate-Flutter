@@ -1,11 +1,13 @@
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
 import 'package:bend_ultimate_flutter/services/firestore_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class EventController extends GetxController {
   final _mapEvents = <DateTime, List<UltimateEvent>>{}.obs;
   final _selectedEvents = <UltimateEvent>[].obs;
   final _selectedEvent = UltimateEvent().obs;
+  final FirestoreService _db = FirestoreService();
 
 
   @override
@@ -15,8 +17,7 @@ class EventController extends GetxController {
   }
 
   void _mapEventsListen() {
-    FirestoreService db = FirestoreService();
-    Stream stream = db.getEventsCollectionStream();
+    Stream stream = _db.getEventsCollectionStream();
     stream.listen((querySnapshot) {
       querySnapshot.docs
           .map((event) => UltimateEvent.fromDocumentSnapshot(event))
