@@ -59,6 +59,13 @@ class EventController extends GetxController {
   set mapEvents(Map<DateTime, List<UltimateEvent>> mapEvents) =>
       this._mapEvents.value = mapEvents;
 
+  void updateSelectedEventAttendees(String name) {
+    _selectedEvent.update((event) {
+      event.attendees.add(name);
+      _db.editEventAttendees(_selectedEvent.value, _selectedEvent.value.attendees);
+    });
+  }
+
   void clear() {
     _selectedEvent.value = UltimateEvent();
     _selectedEvents.value = <UltimateEvent>[];

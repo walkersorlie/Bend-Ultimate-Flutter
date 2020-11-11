@@ -18,6 +18,16 @@ class FirestoreService {
     }
   }
 
+  Future<bool> editEventAttendees(UltimateEvent event, List<dynamic> attendees) async {
+    try {
+      await _firestore.collection('events').doc(event.id).update({'attendees': FieldValue.arrayUnion(attendees)});
+      return true;
+      } catch (e) {
+      print(e);
+      return false;
+      }
+  }
+
   Future<UltimateEvent> getSelectedEvent(String id) async {
     try {
       QueryDocumentSnapshot doc =
