@@ -121,6 +121,9 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   void _onCalendarCreated(
       DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onCalendarCreated');
+
+    var keys = controller.mapEvents.keys;
+    print(keys.length);
   }
 
 
@@ -150,7 +153,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   }
 
   Widget _buildTableCalendar() {
-    print(controller.mapEvents.length);
     return TableCalendar(
       calendarController: _calendarController,
       events: controller.mapEvents,
@@ -220,7 +222,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       ),
       onDaySelected: (date, events, holidays) {
         _onDaySelected(date, events);
-        // _animationController.forward(from: 0.0);
+        _animationController.forward(from: 0.0);
       },
       onVisibleDaysChanged: _onVisibleDaysChanged,
       onCalendarCreated: _onCalendarCreated,
