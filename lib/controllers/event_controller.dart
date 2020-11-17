@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class EventController extends GetxController {
+  final _selectedDay = DateTime.now().obs;
   final _mapEvents = <DateTime, List<UltimateEvent>>{}.obs;
   final _selectedEvents = <UltimateEvent>[].obs;
   final _selectedEvent = UltimateEvent().obs;
@@ -16,43 +17,50 @@ class EventController extends GetxController {
     super.onInit();
   }
 
-  void _mapEventsListen() {
+  void _mapEventsListen() async {
     Stream stream = _db.getEventsCollectionStream();
     stream.listen((querySnapshot) {
+      print('querySnapshot.size, _mapEventsListen(): ' + querySnapshot.size.toString());
       querySnapshot.docs
-          .map((event) => UltimateEvent.fromDocumentSnapshot(event))
-          .forEach((event) {
-            DateTime time = event.time;
-            if (mapEvents.containsKey(time)) {
-              // for each event, compare ids so as not to add a duplicate event
-              bool duplicate = false;
-              Iterator itr = mapEvents[time].iterator;
-              while (itr.moveNext()) {
-                UltimateEvent alreadyAddedEvent = itr.current;
-                if (alreadyAddedEvent.id == event.id) {
-                  duplicate = true;
-                  break;
-                }
-              }
-              // if the event is not a duplicate, add it to the list of events on the selected day
-              if (!duplicate) {
-                List<UltimateEvent> oldList = mapEvents[time];
-                oldList.add(event);
-                mapEvents.update(time, (events) => oldList);
+        .map((event) => UltimateEvent.fromQueryDocumentSnapshot(event))
+        .forEach((event) {
+          DateTime time = DateTime(event.time.year, event.time.month, event.time.day);
+          print(time);
+          if (mapEvents.containsKey(time)) {
+            bool duplicate = false;
+            Iterator itr = mapEvents[time].iterator;
+            while (itr.moveNext()) {
+              UltimateEvent alreadyAddedEvent = itr.current;
+              if (alreadyAddedEvent.id == event.id) {
+                duplicate = true;
+                break;
               }
             }
-            // event is new and not added to any day yet
-            else {
-              mapEvents[time] = [event];
+            if(!duplicate) {
+              // add it to the list of events on the selected day
+              List<UltimateEvent> oldList = mapEvents[time];
+              oldList.add(event);
+              oldList.sort((a, b) => a.time.compareTo(b.time));
+              mapEvents.update(time, (events) => oldList);
+              print('contained: ' + mapEvents.length.toString());
             }
-          });
+          }
+          // event is new and not added to any day yet
+          else {
+            mapEvents[time] = [event];
+            print('not contained: ' + mapEvents.length.toString());
+          }
+        });
     });
+    print('Map events length: ' + _mapEvents.length.toString());
   }
 
+  DateTime get selectedDay => _selectedDay.value;
   UltimateEvent get selectedEvent => _selectedEvent.value;
   List<UltimateEvent> get selectedEvents => _selectedEvents;
   Map<DateTime, List<UltimateEvent>> get mapEvents => _mapEvents;
 
+  set selectedDay(DateTime dateTime) => this._selectedDay.value = dateTime;
   set selectedEvent(UltimateEvent event) => this._selectedEvent.value = event;
   set selectedEvents(List<UltimateEvent> events) =>
       this._selectedEvents.value = events;
@@ -65,7 +73,8 @@ class EventController extends GetxController {
         event.attendees = [name];
       else
         event.attendees.add(name);
-      _db.addEventAttendees(_selectedEvent.value, _selectedEvent.value.attendees);
+      _db.addEventAttendees(
+          _selectedEvent.value, _selectedEvent.value.attendees);
     });
   }
 

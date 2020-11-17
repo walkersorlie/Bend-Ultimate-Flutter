@@ -1,8 +1,13 @@
+import 'package:bend_ultimate_flutter/controllers/auth_controller.dart';
+import 'package:bend_ultimate_flutter/controllers/bindings/auth_form_binding.dart';
 import 'package:bend_ultimate_flutter/controllers/bindings/event_binding.dart';
 import 'package:bend_ultimate_flutter/controllers/bindings/event_form_binding.dart';
+import 'package:bend_ultimate_flutter/controllers/bindings/initial_bindings.dart';
 import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
 import 'package:bend_ultimate_flutter/screens/create_ultimate_event_screen.dart';
+import 'package:bend_ultimate_flutter/screens/root.dart';
+import 'package:bend_ultimate_flutter/screens/sign_in_screen.dart';
 import 'package:bend_ultimate_flutter/screens/ultimate_event_details_screen.dart';
 import 'package:bend_ultimate_flutter/screens/unknown_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,7 +18,6 @@ import 'package:table_calendar/table_calendar.dart';
 void main() {
   runApp(MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   final Future<FirebaseApp> _initialization = Firebase.initializeApp();
@@ -28,34 +32,44 @@ class MyApp extends StatelessWidget {
         if (snapshot.hasError) {
           return Center(child: ErrorWidget.withDetails(error: snapshot.error));
         }
-
         // Once complete, show your application
         if (snapshot.connectionState == ConnectionState.done) {
+          print('initialized firebase');
           return GetMaterialApp(
-            initialRoute: '/',
-            initialBinding: EventBinding(),
-            unknownRoute: GetPage(
-              name: '/404',
-              page: () => UnknownScreen(),
-            ),
-            getPages: [
-              GetPage(
-                name: '/',
-                page: () => HomepageCalendar(title: 'Calendar'),
-                binding: EventBinding(),
+              initialRoute: '/',
+              initialBinding: InitialBindings(),
+              // home: Root(),
+              unknownRoute: GetPage(
+                name: '/404',
+                page: () => UnknownScreen(),
               ),
-              GetPage(
-                name: '/events/create',
-                page: () => CreateUltimateEventScreen(),
-                binding: EventFormBinding(),
-              ),
-              GetPage(
-                name: '/events/details/:id',
-                page: () => UltimateEventDetailsScreen(),
-                binding: EventBinding(),
-              )
-            ]
-          );
+              getPages: [
+                GetPage(
+                  name: '/',
+                  page: () => HomepageCalendar(title: 'Calendar'),
+                  binding: EventBinding(),
+                ),
+                GetPage(
+                  name: '/signIn',
+                  page: () => SignInScreen(),
+                  binding: AuthFormBinding(),
+                ),
+                // GetPage(
+                //   name: '/signUp',
+                //   page: () => SignUpScreen(),
+                //   binding: AuthFormBinding(),
+                // ),
+                GetPage(
+                  name: '/events/create',
+                  page: () => CreateUltimateEventScreen(),
+                  binding: EventFormBinding(),
+                ),
+                GetPage(
+                  name: '/events/details/:id',
+                  page: () => UltimateEventDetailsScreen(),
+                  binding: EventBinding(),
+                )
+              ]);
         }
 
         // Otherwise, show something whilst waiting for initialization to complete
@@ -79,11 +93,10 @@ class HomepageCalendar extends StatefulWidget {
 
 class _HomepageCalendarState extends State<HomepageCalendar>
     with TickerProviderStateMixin {
-
   AnimationController _animationController;
   CalendarController _calendarController;
-  final EventController controller = Get.find<EventController>();
-
+  final EventController eventController = Get.find<EventController>();
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -95,6 +108,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     _animationController.forward();
 
     _calendarController = CalendarController();
+    print('calendar state, mapEvents:' + eventController.mapEvents.length.toString());
   }
 
   @override
@@ -107,9 +121,9 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     print('CALLBACK: _onDaySelected');
     setState(() {
       if (events.isEmpty)
-        controller.selectedEvents = <UltimateEvent>[];
+        eventController.selectedEvents = <UltimateEvent>[];
       else
-        controller.selectedEvents = events;
+        eventController.selectedEvents = events;
     });
   }
 
@@ -122,16 +136,32 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onCalendarCreated');
 
-    var keys = controller.mapEvents.keys;
-    print(keys.length);
+    var keys = eventController.mapEvents.keys;
+    print("mapEvents.keys.length: " + keys.length.toString());
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          GetX(builder: (_) {
+            if (authController.loggedIn) {
+              return IconButton(
+                icon: Icon(Icons.logout),
+                tooltip: 'Sign out',
+                onPressed: () => authController.signOut(),
+              );
+            } else {
+              return IconButton(
+                icon: Icon(Icons.login),
+                tooltip: 'Sign in',
+                onPressed: () => Get.toNamed('/signIn'),
+              );
+            }
+          })
+        ],
       ),
       body: Column(
         mainAxisSize: MainAxisSize.max,
@@ -140,13 +170,12 @@ class _HomepageCalendarState extends State<HomepageCalendar>
           const SizedBox(height: 8.0),
           _buildButtons(),
           const SizedBox(height: 8.0),
-          if (controller.selectedEvents.isNotEmpty)
-            SelectedEvents(),
+          if (eventController.selectedEvents.isNotEmpty) _SelectedEvents(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         tooltip: 'Create event',
-        onPressed: () => Get.toNamed('/events/create'),
+        onPressed: () => Get.toNamed('/events/create', arguments: eventController.selectedDay),
         child: Icon(Icons.add),
       ),
     );
@@ -155,7 +184,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   Widget _buildTableCalendar() {
     return TableCalendar(
       calendarController: _calendarController,
-      events: controller.mapEvents,
+      events: eventController.mapEvents,
       initialCalendarFormat: CalendarFormat.month,
       formatAnimation: FormatAnimation.slide,
       startingDayOfWeek: StartingDayOfWeek.sunday,
@@ -177,6 +206,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       ),
       builders: CalendarBuilders(
         selectedDayBuilder: (context, date, _) {
+          eventController.selectedDay = date;
           return FadeTransition(
             opacity: Tween(begin: 0.0, end: 1.0).animate(_animationController),
             child: Container(
@@ -207,7 +237,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
         },
         markersBuilder: (context, date, events, holidays) {
           final children = <Widget>[];
-
           if (events.isNotEmpty) {
             children.add(
               Positioned(
@@ -310,9 +339,8 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   }
 }
 
-class SelectedEvents extends GetView<EventController> {
-
-  SelectedEvents({Key key}) : super(key: key);
+class _SelectedEvents extends GetView<EventController> {
+  _SelectedEvents({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -330,8 +358,8 @@ class SelectedEvents extends GetView<EventController> {
                 margin:
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(
-                  title: Text('Ultimate'),
-                  subtitle: Text(event.location),
+                  title: Text(event.location),
+                  subtitle: Text(event.time.toString()),
                   onTap: () => {
                     controller.selectedEvent = event,
                     Get.toNamed('/events/details/${event.id}'),
@@ -342,4 +370,3 @@ class SelectedEvents extends GetView<EventController> {
     );
   }
 }
-

@@ -1,19 +1,22 @@
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<bool> createEvent(UltimateEvent event) async {
+
+  Future<dynamic> createEvent(UltimateEvent event) async {
     try {
-      await _firestore.collection('events').add({
+      DocumentReference doc = await _firestore.collection('events').add({
         'location': event.location,
         'time': Timestamp.fromDate(event.time),
         'attendees': event.attendees,
       });
-      return true;
+      return doc;
     } catch (e) {
       print(e);
+      Get.snackbar("Error creating event", e.message, snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }

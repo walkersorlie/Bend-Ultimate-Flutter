@@ -20,17 +20,13 @@ class CreateUltimateEventScreen extends GetView<EventFormController> {
               TextFormField(
                 decoration: InputDecoration(labelText: 'Location'),
                 onSaved: (location) => controller.event.location = location,
-                validator: (value) {
-                  if (value.isEmpty) return 'Please enter a location';
-                  return null;
-                },
+                validator: (value) => value.isEmpty ? 'Please enter a location' : null,
               ),
               _DateTimeField(),
               RaisedButton(
                 child: Text('Create event'),
                 onPressed: () {
                   if (controller.eventFormKey.currentState.validate()) {
-                    print('valid form');
                     controller.eventFormKey.currentState.save();
                     controller.createUltimateEvent(controller.event.location, controller.event.time, controller.event.attendees);
                   }
@@ -55,15 +51,12 @@ class _DateTimeField extends GetView<EventFormController> {
         format: format,
         decoration: InputDecoration(labelText: 'Date and time'),
         onSaved: (dateTime) => controller.event.time = dateTime,
-        validator: (value) {
-          if (value.isNullOrBlank) return 'Please enter a time';
-          return null;
-        },
+        validator: (value) => value.isNullOrBlank ? 'Please enter a time' : null,
         onShowPicker: (context, currentValue) async {
           final date = await showDatePicker(
               context: context,
               firstDate: DateTime(1900),
-              initialDate: currentValue ?? DateTime.now(),
+              initialDate: currentValue ?? Get.arguments,
               lastDate: DateTime(2100));
           if (date != null) {
             final time = await showTimePicker(
