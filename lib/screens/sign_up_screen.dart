@@ -1,10 +1,9 @@
-import 'package:bend_ultimate_flutter/controllers/auth_form_controller.dart';
+import 'package:bend_ultimate_flutter/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class SignUpScreen extends GetWidget<AuthFormController> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+class SignUpScreen extends GetWidget<AuthController> {
+  final _authFormKey = GlobalKey<FormState>();
 
 
   @override
@@ -16,13 +15,13 @@ class SignUpScreen extends GetWidget<AuthFormController> {
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Form(
-          key: controller.authFormKey,
+          key: _authFormKey,
           child: ListView(
             children: [
               TextFormField(
                 decoration: InputDecoration(hintText: "Email"),
                 keyboardType: TextInputType.emailAddress,
-                controller: emailController,
+                controller: controller.emailController,
                 onSaved: (email) => controller.emailController.text = email,
                 validator: (value) => value.isEmpty ? 'Please enter an email' : null,
               ),
@@ -31,7 +30,7 @@ class SignUpScreen extends GetWidget<AuthFormController> {
               ),
               TextFormField(
                 decoration: InputDecoration(hintText: "Password"),
-                controller: passwordController,
+                controller: controller.passwordController,
                 obscureText: true,
                 onSaved: (password) => controller.passwordController.text = password,
                 validator: (value) => value.isEmpty ? 'Please enter a password' : null,
@@ -41,9 +40,9 @@ class SignUpScreen extends GetWidget<AuthFormController> {
                 child: RaisedButton(
                   child: Text("Create account"),
                   onPressed: () {
-                    if (controller.authFormKey.currentState.validate()) {
+                    if (_authFormKey.currentState.validate()) {
                       print('valid form');
-                      controller.authFormKey.currentState.save();
+                      _authFormKey.currentState.save();
                       controller.createFirebaseUser();
                     }
                     print('signed in');

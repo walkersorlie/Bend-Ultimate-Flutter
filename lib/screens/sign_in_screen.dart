@@ -1,9 +1,10 @@
-import 'package:bend_ultimate_flutter/controllers/auth_form_controller.dart';
+import 'package:bend_ultimate_flutter/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class SignInScreen extends GetView<AuthFormController> {
+class SignInScreen extends GetView<AuthController> {
+  final _authFormKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -14,13 +15,12 @@ class SignInScreen extends GetView<AuthFormController> {
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Form(
-          key: controller.authFormKey,
+          key:_authFormKey,
           child: ListView(
             children: [
               TextFormField(
                 decoration: InputDecoration(hintText: "Email"),
                 keyboardType: TextInputType.emailAddress,
-                controller: controller.emailController,
                 onSaved: (email) => controller.emailController.text = email,
                 validator: (value) => value.isEmpty ? 'Please enter an email' : null,
               ),
@@ -39,12 +39,10 @@ class SignInScreen extends GetView<AuthFormController> {
                 child: RaisedButton(
                   child: Text("Sign In"),
                   onPressed: () {
-                    if (controller.authFormKey.currentState.validate()) {
-                      print('valid form');
-                      controller.authFormKey.currentState.save();
+                    if (_authFormKey.currentState.validate()) {
+                      _authFormKey.currentState.save();
                       controller.signInFirebaseUser();
                     }
-                    print('signed in');
                   },
                 ),
               ),

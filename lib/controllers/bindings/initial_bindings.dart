@@ -6,7 +6,7 @@ class InitialBindings extends Bindings {
   @override
   void dependencies() {
     Get.put<AuthController>(AuthController(), permanent: true);
-    Get.put<EventController>(EventController(), permanent: true);
+    Get.put<EventController>(EventController());
   }
 
 }

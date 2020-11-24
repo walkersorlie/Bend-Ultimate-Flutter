@@ -21,6 +21,21 @@ class FirestoreService {
     }
   }
 
+  Future<bool> updateEvent(UltimateEvent event) async {
+    try {
+      await _firestore.collection('events').doc(event.id).update({'location' : event.location, 'time': event.time, 'attendees': event.attendees});
+      return true;
+    } catch (e) {
+      print(e);
+      Get.snackbar('Error editing event', e.message, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+  }
+
+  DocumentReference getUltimateEvent(String id) {
+    return _firestore.collection('events').doc(id);
+  }
+
   Future<bool> addEventAttendees(UltimateEvent event, List<dynamic> attendees) async {
     try {
       await _firestore.collection('events').doc(event.id).update({'attendees': FieldValue.arrayUnion(attendees)});
