@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class UltimateEventDetailsScreenRouter extends MyRouter {
-  static final _routeRE = RegExp(r'\/events\/details\/([^\/]+)$');
+  static final _routeRE = RegExp(r'\/events\/details\/(?<id>[a-zA-Z0-9_]+)$');
 
   @override
   bool matches(RouteSettings settings) =>
@@ -15,12 +15,14 @@ class UltimateEventDetailsScreenRouter extends MyRouter {
   GetPageRoute route(RouteSettings settings) {
     assert(matches(settings));
     final match = _routeRE.firstMatch(settings.name);
-    print(settings.name);
+    // final uri = Uri.parse(settings.name);
+    // print(uri.pathSegments);
+    // print(uri.queryParameters);
     return match == null
         ? null
         : GetPageRoute(
             settings: settings,
-            page: () => UltimateEventDetailsScreen(settings.arguments),
+            page: () => UltimateEventDetailsScreen(match.namedGroup('id')),
             binding: EventBinding(),
           );
   }

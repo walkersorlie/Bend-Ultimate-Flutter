@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 class UltimateEventEditScreen extends GetView<EventController> {
   final _eventFormKey = GlobalKey<FormState>();
   final AuthController authController = Get.find<AuthController>();
-  final format = DateFormat("MM/dd/yyyy, HH:mm");
+  final format = DateFormat("dd/MM/yyyy, HH:mm");
   final String id;
 
   UltimateEventEditScreen(this.id);
