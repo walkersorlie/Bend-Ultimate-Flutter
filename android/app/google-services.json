@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "271193506783",
+    "firebase_url": "https://bend-ultimate.firebaseio.com",
+    "project_id": "bend-ultimate",
+    "storage_bucket": "bend-ultimate.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:271193506783:android:cd44b54863cbdd8667ba6a",
+        "android_client_info": {
+          "package_name": "com.walkersorlie.bend_ultimate_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "271193506783-qjtgtuo2umq8dqegvmnkvpd708shm9s7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.walkersorlie.bend_ultimate_flutter",
+            "certificate_hash": "90a9751eae04255ab8fd550dc79115e939b29801"
+          }
+        },
+        {
+          "client_id": "271193506783-u5t3qo26t7m8kigc4dm47m2ihi7p8u09.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKHYBMIvHzFBrAWrEXqaHwwzfW-68dviI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "271193506783-u5t3qo26t7m8kigc4dm47m2ihi7p8u09.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

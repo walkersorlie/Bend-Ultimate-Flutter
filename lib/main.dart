@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
       future: _initialization,
       builder: (context, snapshot) {
         return snapshot.hasError
-            ? Center(child: Text(snapshot.error))
+            ? Center(child: Text(snapshot.error.toString()))
             : snapshot.connectionState == ConnectionState.done
                 ? GetMaterialApp(
                     initialRoute: '/',

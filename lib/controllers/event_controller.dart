@@ -3,7 +3,6 @@ import 'package:bend_ultimate_flutter/routers/ultimate_event_details_screen_rout
 import 'package:bend_ultimate_flutter/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class EventController extends GetxController {
@@ -25,11 +24,14 @@ class EventController extends GetxController {
   void _mapEventsListen() async {
     Stream stream = _db.getEventsCollectionStream();
     stream.listen((querySnapshot) {
-      // print('querySnapshot.size, _mapEventsListen(): ' + querySnapshot.size.toString());
-      querySnapshot.docs
-        .map((event) => UltimateEvent.fromQueryDocumentSnapshot(event))
-        .forEach((event) {
-          DateTime time = DateTime(event.time.year, event.time.month, event.time.day);
+      print('querySnapshot.size, _mapEventsListen(): ' + querySnapshot.size.toString());
+      print('hasPendingWrites: ${querySnapshot.metadata.hasPendingWrites}');
+      if (!querySnapshot.metadata.hasPendingWrites) {
+        querySnapshot.docs
+            .map((event) => UltimateEvent.fromQueryDocumentSnapshot(event))
+            .forEach((event) {
+          DateTime time = DateTime(
+              event.time.year, event.time.month, event.time.day);
 
           // check if the dateTime is already in the map (which means there are events on that day already)
           if (mapEvents.containsKey(time)) {
@@ -43,7 +45,7 @@ class EventController extends GetxController {
               }
             }
             // if this event is not a duplicate, add it
-            if(!duplicate) {
+            if (!duplicate) {
               // add it to the list of events on the selected day
               List<UltimateEvent> oldList = mapEvents[time];
               oldList.add(event);
@@ -56,6 +58,7 @@ class EventController extends GetxController {
             mapEvents[time] = [event];
           }
         });
+      }
     });
   }
 
@@ -79,7 +82,7 @@ class EventController extends GetxController {
     UltimateEvent event = UltimateEvent(
       location: _newEvent.value.location,
       time: _newEvent.value.time,
-      attendees: _newEvent.value.attendees,
+      attendees: _newEvent.value.attendees.isNull ? [] : _newEvent.value.attendees,
     );
     var doc = await _db.createEvent(event);
     if (doc.runtimeType == DocumentReference) {
@@ -91,7 +94,7 @@ class EventController extends GetxController {
       clearSelectedDay();
       clearNewEvent();
       // Get.offAndToNamed('/events/details/${createdEvent.id}', arguments: createdEvent.id);
-      UltimateEventDetailsScreenRouter.navigate(createdEvent.id);
+      UltimateEventDetailsScreenRouter.navigateAndPop(createdEvent.id);
     }
   }
 

@@ -14,6 +14,7 @@ abstract class MyRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final router =
         routers.firstWhere((r) => r.matches(settings), orElse: () => null);
+    // print('settings: ${settings.name}');
     return router != null
         ? router.route(settings)
         : GetPageRoute(

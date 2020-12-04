@@ -29,4 +29,6 @@ class UltimateEventDetailsScreenRouter extends MyRouter {
 
   static Future<T> navigate<T>(String id) =>
       Get.toNamed('/events/details/$id', arguments: id);
+
+  static Future<T> navigateAndPop<T>(String id) => Get.offAndToNamed('/events/details/$id', arguments: id);
 }

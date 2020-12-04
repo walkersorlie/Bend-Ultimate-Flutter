@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 
 class UltimateEventCreateScreen extends GetView<EventController> {
   final _eventFormKey = GlobalKey<FormState>();
-  final format = DateFormat("MM/dd/yyyy, HH:mm");
+  final format = DateFormat("MM/dd/yyyy, h:mm a");
 
 
   @override

@@ -80,6 +80,6 @@ class FirestoreService {
   }
 
   Stream<QuerySnapshot> getEventsCollectionStream() {
-    return _firestore.collection('events').snapshots();
+    return _firestore.collection('events').snapshots(includeMetadataChanges: true);
   }
 }

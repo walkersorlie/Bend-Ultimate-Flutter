@@ -5,6 +5,8 @@ import 'package:bend_ultimate_flutter/routers/sign_in_screen_router.dart';
 import 'package:bend_ultimate_flutter/routers/ultimate_event_edit_screen_router.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
 
 class UltimateEventDetailsScreen extends GetView<EventController> {
   final String id;
@@ -16,34 +18,29 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
     return FutureBuilder(
       future: controller.checkSelectedEvent(id),
       builder: (context, snapshot) {
-        print('snapshot.data: ${snapshot.data}');
         return snapshot.hasData
             ? snapshot.data == true
                 ? Scaffold(
                     appBar: AppBar(
                       actions: <Widget>[
-                        GetX(builder: (_) {
-                          if (Get.find<AuthController>().loggedIn) {
-                            return IconButton(
+                        Get.find<AuthController>().user != null
+                          ? IconButton(
                               icon: Icon(Icons.edit),
                               tooltip: 'Edit event',
                               onPressed: () {
                                 controller.clearTemporaryEventAttendees();
-                                controller.temporaryEventAttendees = controller
-                                    .selectedEvent.attendees
-                                    .cast<String>();
+                                controller.temporaryEventAttendees = controller.selectedEvent.attendees.isNull
+                                    ? []
+                                    : controller.selectedEvent.attendees.cast<String>();
                                 UltimateEventEditScreenRouter.navigate(
                                     controller.selectedEvent.id);
                               },
-                            );
-                          } else {
-                            return IconButton(
+                            )
+                          : IconButton(
                               icon: Icon(Icons.login),
                               tooltip: 'Sign in',
                               onPressed: () => SignInScreenRouter.navigate(),
-                            );
-                          }
-                        }),
+                            )
                       ],
                     ),
                     body: Padding(
@@ -55,10 +52,12 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
                             if (!controller
                                 .selectedEvent.location.isNullOrBlank)
                               Obx(() =>
-                                  Text(controller.selectedEvent.location)),
+                                  Text(controller.selectedEvent.location)
+                              ),
                             if (!controller.selectedEvent.time.isNullOrBlank)
                               Obx(() => Text(
-                                  controller.selectedEvent.time.toString())),
+                                  DateFormat.yMd().add_jm().format(controller.selectedEvent.time).toString())
+                              ),
                             Obx(
                               () => _displayAttendeesList(),
                             ),

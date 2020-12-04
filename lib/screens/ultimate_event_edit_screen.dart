@@ -16,7 +16,7 @@ class UltimateEventEditScreen extends GetView<EventController> {
 
   @override
   Widget build(BuildContext context) {
-    return authController.loggedIn
+    return authController.user != null
         ? FutureBuilder(
             future: controller.checkSelectedEvent(id),
             builder: (context, snapshot) {

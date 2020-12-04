@@ -7,6 +7,8 @@ import 'package:bend_ultimate_flutter/routers/ultimate_event_details_screen_rout
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+
 
 class HomepageCalendar extends StatefulWidget {
   final String title;
@@ -75,7 +77,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
         title: Text(widget.title),
         actions: <Widget>[
           GetX(builder: (_) {
-            if (authController.loggedIn) {
+            if (authController.user != null) {
               return IconButton(
                 icon: Icon(Icons.logout),
                 tooltip: 'Sign out',
@@ -101,7 +103,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
           if (eventController.selectedEvents.isNotEmpty) _buildEventList(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: authController.user == null ? Container() : FloatingActionButton(
         tooltip: 'Create event',
         onPressed: () => UltimateEventCreateScreenRouter.navigate(),
         child: Icon(Icons.add),
@@ -225,7 +227,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             RaisedButton(
-              child: Text('Month'),
+              child: Text('Month view'),
               onPressed: () {
                 setState(() {
                   _calendarController.setCalendarFormat(CalendarFormat.month);
@@ -233,7 +235,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
               },
             ),
             RaisedButton(
-              child: Text('2 weeks'),
+              child: Text('2 week view'),
               onPressed: () {
                 setState(() {
                   _calendarController
@@ -242,7 +244,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
               },
             ),
             RaisedButton(
-              child: Text('Week'),
+              child: Text('Week view'),
               onPressed: () {
                 setState(() {
                   _calendarController.setCalendarFormat(CalendarFormat.week);
@@ -254,7 +256,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
         const SizedBox(height: 8.0),
         RaisedButton(
           child: Text(
-              'Set day ${dateTime.day}-${dateTime.month}-${dateTime.year}'),
+              'Set today'),
           onPressed: () {
             _calendarController.setSelectedDay(
               DateTime(dateTime.year, dateTime.month, dateTime.day),
@@ -278,7 +280,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(
                   title: Text(event.location),
-                  subtitle: Text(event.time.toString()),
+                  subtitle: Text(DateFormat.yMd().add_jm().format(event.time).toString()),
                   onTap: () => {
                     eventController.selectedEvent = event,
                     // Get.toNamed('/events/details/${event.id}', arguments: event.id),
