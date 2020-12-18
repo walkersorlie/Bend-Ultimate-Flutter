@@ -9,7 +9,6 @@ import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
-
 class HomepageCalendar extends StatefulWidget {
   final String title;
 
@@ -39,6 +38,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     _animationController.forward();
 
     _calendarController = CalendarController();
+    // _calendarController.setCalendarFormat(CalendarFormat.month);
   }
 
   @override
@@ -67,11 +67,18 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     print('CALLBACK: _onCalendarCreated');
 
     var keys = eventController.mapEvents.keys;
-    print("mapEvents.keys.length: " + keys.length.toString());
+    _calendarController.setSelectedDay(DateTime.now());
   }
 
   @override
   Widget build(BuildContext context) {
+    var shortestSide = MediaQuery.of(context).size.shortestSide;
+    var useMobileLayout = shortestSide < 600;
+
+    return useMobileLayout ? _buildMobileLayout() : _buildNonMobileLayout();
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -97,17 +104,115 @@ class _HomepageCalendarState extends State<HomepageCalendar>
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           _buildTableCalendar(),
-          const SizedBox(height: 8.0),
           _buildButtons(),
-          const SizedBox(height: 8.0),
           if (eventController.selectedEvents.isNotEmpty) _buildEventList(),
         ],
       ),
-      floatingActionButton: authController.user == null ? Container() : FloatingActionButton(
-        tooltip: 'Create event',
-        onPressed: () => UltimateEventCreateScreenRouter.navigate(),
-        child: Icon(Icons.add),
+      floatingActionButton: authController.user == null
+          ? Container()
+          : FloatingActionButton(
+              tooltip: 'Create event',
+              onPressed: () => UltimateEventCreateScreenRouter.navigate(),
+              child: Icon(Icons.add),
+            ),
+    );
+  }
+
+  Widget _buildNonMobileLayout() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        centerTitle: true,
+        leading: RaisedButton(
+            onPressed: () {
+              final dateTime = DateTime.now();
+              _calendarController.setSelectedDay(
+                DateTime(dateTime.year, dateTime.month, dateTime.day),
+                runCallback: true,
+              );
+            },
+            child: Text('Today')),
+        actions: <Widget>[
+          DropdownButton(
+            // icon: Text(_calendarController?.calendarFormat.toString() ?? 'Month'),
+            icon: Text('Month'),
+            onChanged: (String selected) {
+              selected == 'Month'
+                  ? setState(() {
+                      _calendarController
+                          .setCalendarFormat(CalendarFormat.month);
+                    })
+                  : setState(() {
+                      _calendarController
+                          .setCalendarFormat(CalendarFormat.week);
+                    });
+            },
+            items: <String>['Month', 'Week']
+                .map<DropdownMenuItem<String>>((String choice) {
+              return DropdownMenuItem<String>(
+                value: choice,
+                child: Text(choice),
+              );
+            }).toList(),
+          ),
+          GetX(builder: (_) {
+            if (authController.user != null) {
+              return IconButton(
+                icon: Icon(Icons.logout),
+                tooltip: 'Sign out',
+                onPressed: () => authController.signOut(),
+              );
+            } else {
+              return IconButton(
+                icon: Icon(Icons.login),
+                tooltip: 'Sign in',
+                onPressed: () => SignInScreenRouter.navigate(),
+              );
+            }
+          })
+        ],
       ),
+      body: Row(
+        children: <Widget>[
+          Expanded(
+            child: Material(
+              elevation: 4.0,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  _buildTableCalendar(),
+                  // _buildButtons(),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              children: <Widget>[
+                eventController.selectedEvents.isNotEmpty
+                    ? _buildEventList()
+                    : Flex(
+                        direction: Axis.horizontal,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            padding: EdgeInsets.all(20),
+                            child: Text('No events today'),
+                          ),
+                        ],
+                      ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: authController.user == null
+          ? Container()
+          : FloatingActionButton(
+              tooltip: 'Create event',
+              onPressed: () => UltimateEventCreateScreenRouter.navigate(),
+              child: Icon(Icons.add),
+            ),
     );
   }
 
@@ -116,12 +221,13 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       calendarController: _calendarController,
       events: eventController.mapEvents,
       initialCalendarFormat: CalendarFormat.month,
+      initialSelectedDay: DateTime.now(),
       formatAnimation: FormatAnimation.slide,
       startingDayOfWeek: StartingDayOfWeek.sunday,
       availableGestures: AvailableGestures.all,
       availableCalendarFormats: const {
-        CalendarFormat.month: '',
-        CalendarFormat.week: '',
+        CalendarFormat.month: 'Month',
+        CalendarFormat.week: 'Week',
       },
       calendarStyle: CalendarStyle(
         outsideDaysVisible: false,
@@ -227,19 +333,19 @@ class _HomepageCalendarState extends State<HomepageCalendar>
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             RaisedButton(
+              child: Text('Set today'),
+              onPressed: () {
+                _calendarController.setSelectedDay(
+                  DateTime(dateTime.year, dateTime.month, dateTime.day),
+                  runCallback: true,
+                );
+              },
+            ),
+            RaisedButton(
               child: Text('Month view'),
               onPressed: () {
                 setState(() {
                   _calendarController.setCalendarFormat(CalendarFormat.month);
-                });
-              },
-            ),
-            RaisedButton(
-              child: Text('2 week view'),
-              onPressed: () {
-                setState(() {
-                  _calendarController
-                      .setCalendarFormat(CalendarFormat.twoWeeks);
                 });
               },
             ),
@@ -253,23 +359,13 @@ class _HomepageCalendarState extends State<HomepageCalendar>
             ),
           ],
         ),
-        const SizedBox(height: 8.0),
-        RaisedButton(
-          child: Text(
-              'Set today'),
-          onPressed: () {
-            _calendarController.setSelectedDay(
-              DateTime(dateTime.year, dateTime.month, dateTime.day),
-              runCallback: true,
-            );
-          },
-        ),
       ],
     );
   }
 
   Widget _buildEventList() {
-    return Expanded(child: ListView(
+    return Expanded(
+        child: ListView(
       children: eventController.selectedEvents
           .map((event) => Container(
                 decoration: BoxDecoration(
@@ -280,7 +376,8 @@ class _HomepageCalendarState extends State<HomepageCalendar>
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(
                   title: Text(event.location),
-                  subtitle: Text(DateFormat.yMd().add_jm().format(event.time).toString()),
+                  subtitle: Text(
+                      DateFormat.yMd().add_jm().format(event.time).toString()),
                   onTap: () => {
                     eventController.selectedEvent = event,
                     // Get.toNamed('/events/details/${event.id}', arguments: event.id),
