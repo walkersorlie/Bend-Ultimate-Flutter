@@ -1,5 +1,6 @@
 import 'package:bend_ultimate_flutter/controllers/bindings/initial_bindings.dart';
 import 'package:bend_ultimate_flutter/routers/router.dart';
+import 'package:bend_ultimate_flutter/themes/base_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
             ? Center(child: Text(snapshot.error.toString()))
             : snapshot.connectionState == ConnectionState.done
                 ? GetMaterialApp(
+                    theme: BaseTheme.baseTheme,
                     initialRoute: '/',
                     initialBinding: InitialBindings(),
                     onGenerateRoute: (settings) => MyRouter.onGenerateRoute(settings),

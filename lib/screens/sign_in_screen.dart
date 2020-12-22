@@ -8,54 +8,214 @@ class SignInScreen extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double deviceHeight = MediaQuery.of(context).size.height;
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Sign In'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Form(
-          key:_authFormKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(hintText: "Email"),
-                keyboardType: TextInputType.emailAddress,
-                onSaved: (email) => controller.emailController.text = email,
-                validator: (value) => value.isEmpty ? 'Please enter an email' : null,
-              ),
-              SizedBox(
-                height: 40,
-              ),
-              TextFormField(
-                decoration: InputDecoration(hintText: "Password"),
-                controller: controller.passwordController,
-                obscureText: true,
-                onSaved: (password) => controller.passwordController.text = password,
-                validator: (value) => value.isEmpty ? 'Please enter a password' : null,
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 40.0, right: 40.0, top: 20.0),
-                child: RaisedButton(
-                  child: Text("Sign In"),
-                  onPressed: () {
-                    if (_authFormKey.currentState.validate()) {
-                      _authFormKey.currentState.save();
-                      controller.signInFirebaseUser();
-                    }
-                  },
+      body: shortestSide < 600
+          ? Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: deviceWidth * 0.8,
+                  maxHeight: deviceHeight * 0.8,
+                ),
+                margin: const EdgeInsets.symmetric(
+                    horizontal: 10.0, vertical: 40.0),
+                child: Form(
+                  key: _authFormKey,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 20.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(hintText: "Email"),
+                            keyboardType: TextInputType.emailAddress,
+                            onSaved: (email) =>
+                                controller.emailController.text = email,
+                            validator: (value) =>
+                                value.isEmpty ? 'Please enter an email' : null,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 20.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(hintText: "Password"),
+                            controller: controller.passwordController,
+                            obscureText: true,
+                            onSaved: (password) =>
+                                controller.passwordController.text = password,
+                            validator: (value) => value.isEmpty
+                                ? 'Please enter a password'
+                                : null,
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 20.0),
+                          child: ElevatedButton(
+                            child: Text("Sign In"),
+                            onPressed: () {
+                              if (_authFormKey.currentState.validate()) {
+                                _authFormKey.currentState.save();
+                                controller.signInFirebaseUser();
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              // Container(
-              //   padding: EdgeInsets.only(left: 40.0, right: 40.0, top: 20.0),
-              //   child: RaisedButton(
-              //     child: Text("Sign Up"),
-              //     onPressed: () {
-              //       Get.toNamed('/signUp');
-              //     },
-              //   ),
-              // ),
-            ],
+            )
+          : shortestSide < 950
+            ? Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: deviceWidth * 0.58,
+                  maxHeight: deviceHeight * 0.58,
+                ),
+                margin: const EdgeInsets.symmetric(
+                    horizontal: 40.0, vertical: 40.0),
+                child: Form(
+                  key: _authFormKey,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 40.0, vertical: 20.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(hintText: "Email"),
+                            keyboardType: TextInputType.emailAddress,
+                            onSaved: (email) =>
+                                controller.emailController.text = email,
+                            validator: (value) =>
+                                value.isEmpty ? 'Please enter an email' : null,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 40.0, vertical: 20.0),
+                          child: TextFormField(
+                            decoration: InputDecoration(hintText: "Password"),
+                            controller: controller.passwordController,
+                            obscureText: true,
+                            onSaved: (password) =>
+                                controller.passwordController.text = password,
+                            validator: (value) => value.isEmpty
+                                ? 'Please enter a password'
+                                : null,
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 40.0, vertical: 20.0),
+                          child: ElevatedButton(
+                            child: Text("Sign In"),
+                            onPressed: () {
+                              if (_authFormKey.currentState.validate()) {
+                                _authFormKey.currentState.save();
+                                controller.signInFirebaseUser();
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: deviceWidth * 0.37,
+            maxHeight: deviceHeight * 0.37,
+          ),
+          margin: const EdgeInsets.symmetric(
+              horizontal: 40.0, vertical: 40.0),
+          child: Form(
+            key: _authFormKey,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 40.0, vertical: 20.0),
+                    child: TextFormField(
+                      decoration: InputDecoration(hintText: "Email"),
+                      keyboardType: TextInputType.emailAddress,
+                      onSaved: (email) =>
+                      controller.emailController.text = email,
+                      validator: (value) =>
+                      value.isEmpty ? 'Please enter an email' : null,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 40.0, vertical: 20.0),
+                    child: TextFormField(
+                      decoration: InputDecoration(hintText: "Password"),
+                      controller: controller.passwordController,
+                      obscureText: true,
+                      onSaved: (password) =>
+                      controller.passwordController.text = password,
+                      validator: (value) => value.isEmpty
+                          ? 'Please enter a password'
+                          : null,
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 40.0, vertical: 20.0),
+                    child: ElevatedButton(
+                      child: Text("Sign In"),
+                      onPressed: () {
+                        if (_authFormKey.currentState.validate()) {
+                          _authFormKey.currentState.save();
+                          controller.signInFirebaseUser();
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

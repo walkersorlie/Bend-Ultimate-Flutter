@@ -24,8 +24,6 @@ class EventController extends GetxController {
   void _mapEventsListen() async {
     Stream stream = _db.getEventsCollectionStream();
     stream.listen((querySnapshot) {
-      print('querySnapshot.size, _mapEventsListen(): ' + querySnapshot.size.toString());
-      print('hasPendingWrites: ${querySnapshot.metadata.hasPendingWrites}');
       if (!querySnapshot.metadata.hasPendingWrites) {
         querySnapshot.docs
             .map((event) => UltimateEvent.fromQueryDocumentSnapshot(event))
@@ -87,13 +85,10 @@ class EventController extends GetxController {
     var doc = await _db.createEvent(event);
     if (doc.runtimeType == DocumentReference) {
       print('event created');
-      // Get.back();
-      // Get.offAllNamed('/');
       UltimateEvent createdEvent = UltimateEvent.fromDocumentSnapshot(await doc.get());
       _selectedEvent.value = createdEvent;
       clearSelectedDay();
       clearNewEvent();
-      // Get.offAndToNamed('/events/details/${createdEvent.id}', arguments: createdEvent.id);
       UltimateEventDetailsScreenRouter.navigateAndPop(createdEvent.id);
     }
   }
