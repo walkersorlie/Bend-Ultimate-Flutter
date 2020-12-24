@@ -1,9 +1,11 @@
+import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:bend_ultimate_flutter/controllers/auth_controller.dart';
 import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
 import 'package:bend_ultimate_flutter/routers/sign_in_screen_router.dart';
 import 'package:bend_ultimate_flutter/routers/ultimate_event_create_screen_router.dart';
 import 'package:bend_ultimate_flutter/routers/ultimate_event_details_screen_router.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -178,9 +180,40 @@ class _HomepageCalendarState extends State<HomepageCalendar>
             child: Column(
               children: [
                 Flexible(
-                  child: Text(
-                    'Contacts',
-                    style: TextStyle().copyWith(fontSize: 20),
+                  child: ListTile(
+                    leading: Text(
+                      'Contacts',
+                      style: TextStyle().copyWith(fontSize: 20),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.add),
+                      tooltip: 'Add contact',
+                      onPressed: () async {
+                        final List<String> fields = await showTextInputDialog(
+                          context: context,
+                          textFields: [
+                            DialogTextField(
+                              hintText: 'First Name (required)',
+                              validator: (value) => value.isEmpty ? 'Please enter a last name' : null,
+                            ),
+                            DialogTextField(
+                              hintText: 'Last Name (required)',
+                              validator: (value) => value.isEmpty ? 'Please enter a last name' : null,
+                            ),
+                            DialogTextField(
+                              hintText: 'Email Address (optional)',
+                              validator: (value) => value.isNotEmpty && !EmailValidator.validate(value) ? 'Not a valid email address' : null,
+                            ),
+                            DialogTextField(
+                              hintText: 'Phone Number (optional)',
+                              validator: (value) => value.isNotEmpty && !_validatePhoneNumber(value) ? 'Not a valid phone number' : null,
+                            ),
+                          ],
+                          title: 'Add name',
+                        );
+                        authController.createUser(fields);
+                      },
+                    ),
                   ),
                 ),
                 Expanded(
@@ -217,6 +250,11 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     );
   }
 
+  bool _validatePhoneNumber(String number) {
+    final _regex = RegExp(r'\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$');
+    return _regex.hasMatch(number) ? true : false;
+  }
+
   Widget _buildTableCalendar() {
     return TableCalendar(
       calendarController: _calendarController,
@@ -242,6 +280,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       headerStyle: HeaderStyle(
         centerHeaderTitle: true,
         formatButtonVisible: true,
+        formatButtonShowsNext: false,
       ),
       builders: CalendarBuilders(
         // dayBuilder: (context, date, _) {
@@ -382,7 +421,8 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   }
 
   Widget _displayContacts() {
-    return ListView(
+    return !authController.users.isNullOrBlank
+    ? ListView(
         children: authController.users
             .map(
               (user) => Container(
@@ -396,7 +436,8 @@ class _HomepageCalendarState extends State<HomepageCalendar>
                 ),
               ),
             )
-            .toList());
+            .toList())
+        : Container();
   }
 
   Widget _buildEventList() {

@@ -96,7 +96,7 @@ class FirestoreService {
   }
 
 
-  Future<dynamic> createUser(CustomUser user) async {
+  Future<bool> createUser(CustomUser user) async {
     try {
       DocumentReference doc = await _firestore.collection('users').add({
         'first_name': user.firstName,
@@ -104,7 +104,7 @@ class FirestoreService {
         'email_address': user.emailAddress,
         'phone_number': user.phoneNumber,
       });
-      return doc;
+      return true;
     } catch (e) {
       print(e);
       Get.snackbar("Error creating user", e.message, snackPosition: SnackPosition.BOTTOM);

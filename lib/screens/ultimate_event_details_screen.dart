@@ -14,129 +14,19 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
 
   @override
   Widget build(BuildContext context) {
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double deviceHeight = MediaQuery.of(context).size.height;
-    double shortestSide = MediaQuery.of(context).size.shortestSide;
-
     return FutureBuilder(
       future: controller.checkSelectedEvent(id),
       builder: (context, snapshot) {
         return snapshot.hasData
             ? snapshot.data == true
                 ? Scaffold(
-                    appBar: AppBar(
-                      actions: <Widget>[
-                        Get.find<AuthController>().user != null
-                            ? IconButton(
-                                icon: Icon(Icons.edit),
-                                tooltip: 'Edit event',
-                                onPressed: () {
-                                  controller.clearTemporaryEventAttendees();
-                                  controller.temporaryEventAttendees =
-                                      controller.selectedEvent.attendees.isNull
-                                          ? []
-                                          : controller.selectedEvent.attendees
-                                              .cast<String>();
-                                  UltimateEventEditScreenRouter.navigate(
-                                      controller.selectedEvent.id);
-                                },
-                              )
-                            : IconButton(
-                                icon: Icon(Icons.login),
-                                tooltip: 'Sign in',
-                                onPressed: () => SignInScreenRouter.navigate(),
-                              )
-                      ],
-                    ),
-                    body: Column(
-                      children: [
-                        Flexible(
-                          flex: 0,
-                          child: Container(
-                            // constraints: BoxConstraints(
-                            //   maxWidth: deviceWidth * 0.24,
-                            //   maxHeight: deviceHeight * 0.18,
-                            // ),
-                            margin: EdgeInsets.only(top: 25),
-                            child: Column(
-                              children: [
-                                Center(
-                                  child: Obx(
-                                    () => Text(
-                                      "Location: ${controller.selectedEvent.location}",
-                                      style: TextStyle().copyWith(fontSize: 40),
-                                    ),
-                                  ),
-                                ),
-                                Center(
-                                  child: Obx(
-                                    () => Text(
-                                      "Date and time: ${DateFormat.yMd().add_jm().format(controller.selectedEvent.time).toString()}",
-                                      style: TextStyle().copyWith(fontSize: 25),
-                                    ),
-                                  ),
-                                ),
-                                Center(
-                                  child: Container(
-                                      margin: EdgeInsets.symmetric(
-                                          horizontal: 10.0, vertical: 20.0),
-                                      child: Text(
-                                        "Attendees:",
-                                        style:
-                                            TextStyle().copyWith(fontSize: 20),
-                                      )),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 5,
-                          child: Align(
-                                alignment: Alignment.topCenter,
-                                child: shortestSide < 600
-                                    ? Obx(
-                                        () => _displayAttendeesList(context),
-                                      )
-                                    : FractionallySizedBox(
-                                        widthFactor: 0.6,
-                                        child: Obx(
-                                          () => _displayAttendeesList(context),
-                                        ),
-                                      )),
-                          ),
-                      ],
-                    ),
-                    floatingActionButton: FloatingActionButton(
-                      tooltip: 'Add name',
-                      child: Icon(Icons.add),
-                      onPressed: () async {
-                        final List<String> names = await showTextInputDialog(
-                          context: context,
-                          textFields: const [
-                            DialogTextField(),
-                          ],
-                          title: 'Add name',
-                        );
-                        controller
-                            .selectedEventAttendeesAdd(names.elementAt(0));
-                      },
-                    ),
+                    appBar: _buildAppBar(),
+                    body: _buildBody(context),
+                    floatingActionButton: _buildFloatingActionButton(context),
                     floatingActionButtonLocation:
                         FloatingActionButtonLocation.centerFloat,
                   )
-                : Scaffold(
-                    appBar: AppBar(title: Text('Error')),
-                    body: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('This event does not exist'),
-                        ],
-                      ),
-                    ),
-                  )
+                : _buildEventDoesNotExist()
             : snapshot.hasError
                 ? Scaffold(
                     appBar: AppBar(title: Text('Error')),
@@ -160,6 +50,117 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
                       ),
                     ),
                   );
+      },
+    );
+  }
+
+  Widget _buildAppBar() {
+    return AppBar(
+      actions: <Widget>[
+        Get.find<AuthController>().user != null
+            ? IconButton(
+          icon: Icon(Icons.edit),
+          tooltip: 'Edit event',
+          onPressed: () {
+            controller.clearTemporaryEventAttendees();
+            controller.temporaryEventAttendees =
+            controller.selectedEvent.attendees.isNull
+                ? []
+                : controller.selectedEvent.attendees
+                .cast<String>();
+            UltimateEventEditScreenRouter.navigate(
+                controller.selectedEvent.id);
+          },
+        )
+            : IconButton(
+          icon: Icon(Icons.login),
+          tooltip: 'Sign in',
+          onPressed: () => SignInScreenRouter.navigate(),
+        )
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double deviceHeight = MediaQuery.of(context).size.height;
+    double shortestSide = MediaQuery.of(context).size.shortestSide;
+
+    return Column(
+      children: [
+        Flexible(
+          flex: 0,
+          child: Container(
+            // constraints: BoxConstraints(
+            //   maxWidth: deviceWidth * 0.24,
+            //   maxHeight: deviceHeight * 0.18,
+            // ),
+            margin: EdgeInsets.only(top: 25),
+            child: Column(
+              children: [
+                Center(
+                  child: Obx(
+                        () => Text(
+                      "Location: ${controller.selectedEvent.location}",
+                      style: TextStyle().copyWith(fontSize: 40),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Obx(
+                        () => Text(
+                      "Date and time: ${DateFormat.yMd().add_jm().format(controller.selectedEvent.time).toString()}",
+                      style: TextStyle().copyWith(fontSize: 25),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                      margin: EdgeInsets.symmetric(
+                          horizontal: 10.0, vertical: 20.0),
+                      child: Text(
+                        "Attendees:",
+                        style:
+                        TextStyle().copyWith(fontSize: 20),
+                      )),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 5,
+          child: Align(
+              alignment: Alignment.topCenter,
+              child: shortestSide < 600
+                  ? Obx(
+                    () => _displayAttendeesList(context),
+              )
+                  : FractionallySizedBox(
+                widthFactor: 0.6,
+                child: Obx(
+                      () => _displayAttendeesList(context),
+                ),
+              )),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFloatingActionButton(BuildContext context) {
+    return FloatingActionButton(
+      tooltip: 'Add name',
+      child: Icon(Icons.add),
+      onPressed: () async {
+        final List<String> names = await showTextInputDialog(
+          context: context,
+          textFields: const [
+            DialogTextField(hintText: 'Name'),
+          ],
+          title: 'Add name',
+        );
+        controller
+            .selectedEventAttendeesAdd(names.elementAt(0));
       },
     );
   }
@@ -239,6 +240,21 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
           ),
         )
       ],
+    );
+  }
+
+  Widget _buildEventDoesNotExist() {
+    return Scaffold(
+      appBar: AppBar(title: Text('Error')),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('This event does not exist'),
+          ],
+        ),
+      ),
     );
   }
 }

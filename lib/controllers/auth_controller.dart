@@ -82,6 +82,20 @@ class AuthController extends GetxController {
     }
   }
 
+  void createUser(List<String> fields) async {
+    CustomUser newUser = CustomUser(
+      fields[0].trim(),
+      fields[1].trim(),
+      emailAddress: fields[2].isNotEmpty ? fields[2] : null,
+      phoneNumber: fields[3].isNotEmpty ? fields[3] : null,
+    );
+    if (await _db.createUser(newUser)) {
+      Get.snackbar('Contact Added', 'Contact added successfully',
+          snackPosition: SnackPosition.BOTTOM);
+
+    }
+  }
+
   void clearTextControllers() {
     emailController = TextEditingController();
     passwordController = TextEditingController();
