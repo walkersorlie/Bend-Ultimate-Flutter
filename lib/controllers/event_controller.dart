@@ -1,4 +1,5 @@
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
+import 'package:bend_ultimate_flutter/routers/homepage_router.dart';
 import 'package:bend_ultimate_flutter/routers/ultimate_event_details_screen_router.dart';
 import 'package:bend_ultimate_flutter/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -133,6 +134,14 @@ class EventController extends GetxController {
       _selectedEvent.value.attendees = oldAttendees;
   }
 
+  void deleteUltimateEvent() async {
+    if(await _db.deleteUltimateEvent(_selectedEvent.value)) {
+      clearSelectedEvent();
+      Get.snackbar('Event deleted', 'This event was successfully deleted', snackPosition: SnackPosition.BOTTOM);
+      HomepageRouter.navigate();
+    }
+  }
+
   Future<bool> _getUltimateEvent(String id) async {
     DocumentReference docRef = _db.getUltimateEvent(id);
     DocumentSnapshot doc = await docRef.get();
@@ -197,6 +206,8 @@ class EventController extends GetxController {
     _selectedEvents.value = <UltimateEvent>[];
     _mapEvents.value = <DateTime, List<UltimateEvent>>{};
   }
+
+  void clearSelectedEvent() => _selectedEvent.value = UltimateEvent();
 
   void clearSelectedDay() => _selectedDay.value = DateTime.now();
   void clearNewEvent() => _newEvent.value = UltimateEvent();

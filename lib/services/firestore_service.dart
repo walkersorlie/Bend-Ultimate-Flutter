@@ -1,4 +1,5 @@
 import 'package:bend_ultimate_flutter/models/ultimate_event.dart';
+import 'package:bend_ultimate_flutter/models/custom_user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
@@ -28,6 +29,17 @@ class FirestoreService {
     } catch (e) {
       print(e);
       Get.snackbar('Error editing event', e.message, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+  }
+
+  Future<bool> deleteUltimateEvent(UltimateEvent event) async {
+    try {
+      await _firestore.collection('events').doc(event.id).delete();
+      return true;
+    } catch (e) {
+      print(e);
+      Get.snackbar('Error deleting event', e.message, snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -81,5 +93,37 @@ class FirestoreService {
 
   Stream<QuerySnapshot> getEventsCollectionStream() {
     return _firestore.collection('events').snapshots(includeMetadataChanges: true);
+  }
+
+
+  Future<dynamic> createUser(CustomUser user) async {
+    try {
+      DocumentReference doc = await _firestore.collection('users').add({
+        'first_name': user.firstName,
+        'last_name': user.lastName,
+        'email_address': user.emailAddress,
+        'phone_number': user.phoneNumber,
+      });
+      return doc;
+    } catch (e) {
+      print(e);
+      Get.snackbar("Error creating user", e.message, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+  }
+
+  Future<bool> deleteUser(CustomUser user) async {
+    try {
+      await _firestore.collection('users').doc(user.id).delete();
+      return true;
+    } catch (e) {
+      print(e);
+      Get.snackbar('Error deleting user', e.message, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+  }
+
+  Stream<QuerySnapshot> getUsersCollectionStream() {
+    return _firestore.collection('users').orderBy('last_name').snapshots(includeMetadataChanges: true);
   }
 }

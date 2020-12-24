@@ -28,6 +28,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   final EventController eventController = Get.find<EventController>();
   final AuthController authController = Get.find<AuthController>();
   String viewFormat;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -71,106 +72,148 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     _calendarController.setSelectedDay(DateTime.now());
   }
 
+  void _bottomNavItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double shortestSide = MediaQuery.of(context).size.shortestSide;
     bool _useMobileLayout = shortestSide < 600;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        centerTitle: true,
-        leading: ElevatedButton(
-          onPressed: () {
-            final dateTime = DateTime.now();
-            _calendarController.setSelectedDay(
-              DateTime(dateTime.year, dateTime.month, dateTime.day),
-              runCallback: true,
-            );
-          },
-          child: Text('Today'),
-        ),
-        actions: <Widget>[
-          DropdownButton(
-            value: "Month",
-            icon: Icon(Icons.arrow_drop_down),
-            onChanged: (String selected) {
-              selected == 'Month'
-                  ? setState(() {
-                      _calendarController
-                          .setCalendarFormat(CalendarFormat.month);
-                      viewFormat = "Month";
-                    })
-                  : setState(() {
-                      _calendarController
-                          .setCalendarFormat(CalendarFormat.week);
-                      viewFormat = "Week";
-                    });
-            },
-            items: <String>['Month', 'Week']
-                .map<DropdownMenuItem<String>>((String choice) {
-              return DropdownMenuItem<String>(
-                value: choice,
-                child: Text(choice),
-              );
-            }).toList(),
-          ),
-          GetX(builder: (_) {
-            return authController.user != null
-                ? IconButton(
-                    icon: Icon(Icons.logout),
-                    tooltip: 'Sign out',
-                    onPressed: () => authController.signOut(),
-                  )
-                : IconButton(
-                    icon: Icon(Icons.login),
-                    tooltip: 'Sign in',
-                    onPressed: () => SignInScreenRouter.navigate(),
-                  );
-          }),
-        ],
+    return _useMobileLayout
+        ? _buildMobileDisplay(context)
+        : _buildNotMobileDisplay(context);
+  }
+
+  Widget _buildAppBar() {
+    return AppBar(
+      title: Text(widget.title),
+      centerTitle: true,
+      leading: ElevatedButton(
+        onPressed: () {
+          final dateTime = DateTime.now();
+          _calendarController.setSelectedDay(
+            DateTime(dateTime.year, dateTime.month, dateTime.day),
+            runCallback: true,
+          );
+        },
+        child: Text('Today'),
       ),
-      body: _useMobileLayout
+      actions: <Widget>[
+        GetX(builder: (_) {
+          return authController.user != null
+              ? IconButton(
+                  icon: Icon(Icons.logout),
+                  tooltip: 'Sign out',
+                  onPressed: () => authController.signOut(),
+                )
+              : IconButton(
+                  icon: Icon(Icons.login),
+                  tooltip: 'Sign in',
+                  onPressed: () => SignInScreenRouter.navigate(),
+                );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return authController.user == null
+        ? Container()
+        : FloatingActionButton(
+            tooltip: 'Create event',
+            onPressed: () => UltimateEventCreateScreenRouter.navigate(),
+            child: Icon(Icons.add),
+          );
+  }
+
+  Widget _buildMobileDisplay(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: _selectedIndex == 0
           ? Column(
-              mainAxisSize: MainAxisSize.max,
               children: <Widget>[
                 _buildTableCalendar(),
-                // _buildButtons(),
                 if (eventController.selectedEvents.isNotEmpty)
                   Expanded(child: _buildEventList()),
               ],
             )
-          : Row(
-              children: <Widget>[
+          : Column(
+              children: [
                 Expanded(
-                  flex: 5,
-                  child: Material(
-                    elevation: 4.0,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: _buildTableCalendar(),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Align(
-                    child: eventController.selectedEvents.isNotEmpty
-                        ? _buildEventList()
-                        : Container(
-                            child: Text('No events today'),
-                          ),
+                  child: Obx(
+                    () => _displayContacts(),
                   ),
                 ),
               ],
             ),
-      floatingActionButton: authController.user == null
-          ? Container()
-          : FloatingActionButton(
-              tooltip: 'Create event',
-              onPressed: () => UltimateEventCreateScreenRouter.navigate(),
-              child: Icon(Icons.add),
+      bottomNavigationBar: BottomNavigationBar(
+        elevation: 5,
+        onTap: _bottomNavItemTapped,
+        currentIndex: _selectedIndex,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Calendar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.contacts),
+            label: 'Contacts',
+          ),
+        ],
+      ),
+      floatingActionButton: _buildFloatingActionButton(),
+    );
+  }
+
+  Widget _buildNotMobileDisplay(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              children: [
+                Flexible(
+                  child: Text(
+                    'Contacts',
+                    style: TextStyle().copyWith(fontSize: 20),
+                  ),
+                ),
+                Expanded(
+                  child: Obx(
+                    () => _displayContacts(),
+                  ),
+                ),
+              ],
             ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Material(
+              elevation: 5.0,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: _buildTableCalendar(),
+              ),
+            ),
+          ),
+          Flexible(
+            flex: 3,
+            child: Align(
+              child: eventController.selectedEvents.isNotEmpty
+                  ? _buildEventList()
+                  : Container(
+                      child: Text('No events today'),
+                    ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
@@ -198,7 +241,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       ),
       headerStyle: HeaderStyle(
         centerHeaderTitle: true,
-        formatButtonVisible: false,
+        formatButtonVisible: true,
       ),
       builders: CalendarBuilders(
         // dayBuilder: (context, date, _) {
@@ -270,7 +313,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       },
       onVisibleDaysChanged: _onVisibleDaysChanged,
       onCalendarCreated: _onCalendarCreated,
-      rowHeight: 135.0,
     );
   }
 
@@ -339,33 +381,53 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     );
   }
 
+  Widget _displayContacts() {
+    return ListView(
+        children: authController.users
+            .map(
+              (user) => Container(
+                child: Card(
+                  child: ListTile(
+                    title: Text('${user.firstName} ${user.lastName}'),
+                    subtitle: !user.phoneNumber.isNull
+                        ? Text(user.phoneNumber)
+                        : Container(),
+                  ),
+                ),
+              ),
+            )
+            .toList());
+  }
+
   Widget _buildEventList() {
     return ListView(
       children: eventController.selectedEvents
-          .map((event) => Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Theme.of(context).primaryColor,
-                    width: 0.8,
-                  ),
-                  borderRadius: BorderRadius.circular(12.0),
+          .map(
+            (event) => Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Theme.of(context).primaryColor,
+                  width: 0.8,
                 ),
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 40.0, vertical: 9.0),
-                child: ListTile(
-                  title: Center(child: Text(event.location)),
-                  subtitle: Center(
-                      child: Text(DateFormat.yMd()
-                          .add_jm()
-                          .format(event.time)
-                          .toString())),
-                  onTap: () => {
-                    eventController.selectedEvent = event,
-                    // Get.toNamed('/events/details/${event.id}', arguments: event.id),
-                    UltimateEventDetailsScreenRouter.navigate(event.id),
-                  },
-                ),
-              ))
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              margin:
+                  const EdgeInsets.symmetric(horizontal: 40.0, vertical: 9.0),
+              child: ListTile(
+                title: Center(child: Text(event.location)),
+                subtitle: Center(
+                    child: Text(DateFormat.yMd()
+                        .add_jm()
+                        .format(event.time)
+                        .toString())),
+                onTap: () => {
+                  eventController.selectedEvent = event,
+                  // Get.toNamed('/events/details/${event.id}', arguments: event.id),
+                  UltimateEventDetailsScreenRouter.navigate(event.id),
+                },
+              ),
+            ),
+          )
           .toList(),
     );
   }
