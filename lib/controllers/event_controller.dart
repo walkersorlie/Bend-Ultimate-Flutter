@@ -15,7 +15,6 @@ class EventController extends GetxController {
   final _temporaryEventAttendees = <String>[].obs;
   final FirestoreService _db = FirestoreService();
 
-
   @override
   void onInit() {
     _mapEventsListen();
@@ -25,40 +24,55 @@ class EventController extends GetxController {
   void _mapEventsListen() async {
     Stream stream = _db.getEventsCollectionStream();
     stream.listen((querySnapshot) {
-      if (!querySnapshot.metadata.hasPendingWrites) {
-        querySnapshot.docs
-            .map((event) => UltimateEvent.fromQueryDocumentSnapshot(event))
-            .forEach((event) {
-          DateTime time = DateTime(
-              event.time.year, event.time.month, event.time.day);
-
+      // print('querySnapshot.size, _mapEventsListen(): ' + querySnapshot.size.toString());
+      // print('hasPendingWrites: ${querySnapshot.metadata.hasPendingWrites}');
+      querySnapshot.docChanges.forEach((document) {
+        print('document.type: ${document.type}');
+        print(
+            'documents pendingWrites: ${document.doc.metadata.hasPendingWrites}');
+        if (document.type == DocumentChangeType.added) {
+          UltimateEvent event =
+              UltimateEvent.fromDocumentSnapshot(document.doc);
+          DateTime time =
+              DateTime(event.time.year, event.time.month, event.time.day);
           // check if the dateTime is already in the map (which means there are events on that day already)
-          if (mapEvents.containsKey(time)) {
-            bool duplicate = false;
-            Iterator itr = mapEvents[time].iterator;
-            while (itr.moveNext()) {
-              UltimateEvent alreadyAddedEvent = itr.current;
-              if (alreadyAddedEvent.id == event.id) {
-                duplicate = true;
-                break;
-              }
-            }
-            // if this event is not a duplicate, add it
-            if (!duplicate) {
-              // add it to the list of events on the selected day
-              List<UltimateEvent> oldList = mapEvents[time];
-              oldList.add(event);
-              oldList.sort((a, b) => a.time.compareTo(b.time));
-              mapEvents.update(time, (events) => oldList);
-            }
+          if (_mapEvents.containsKey(time)) {
+            // add it to the list of events on the selected day
+            List<UltimateEvent> oldList = _mapEvents[time];
+            oldList.add(event);
+            _mapEvents.update(time, (events) => oldList);
           }
           // event is new and not added to any day yet
           else {
-            mapEvents[time] = [event];
+            _mapEvents[time] = [event];
           }
-        });
-      }
+        }
+        if (document.type == DocumentChangeType.modified) {
+          UltimateEvent event =
+              UltimateEvent.fromDocumentSnapshot(document.doc);
+          DateTime time =
+              DateTime(event.time.year, event.time.month, event.time.day);
+          List<UltimateEvent> eventsOnDay = _mapEvents[time];
+          eventsOnDay[eventsOnDay
+              .indexWhere((element) => element.id == event.id)] = event;
+        }
+        if (document.type == DocumentChangeType.removed) {
+          UltimateEvent event =
+              UltimateEvent.fromDocumentSnapshot(document.doc);
+          DateTime time =
+              DateTime(event.time.year, event.time.month, event.time.day);
+          print('_selectedEvent: ${_selectedEvent.value}');
+          print(event);
+          print('events equal: ${_selectedEvent.value == event}');
+          List<UltimateEvent> eventsOnDay = _mapEvents[time];
+          eventsOnDay.remove(event);
+        }
+      });
     });
+
+    // sort all events lists
+    _mapEvents.forEach((date, eventsList) =>
+        eventsList.sort((a, b) => a.time.compareTo(b.time)));
   }
 
   DateTime get selectedDay => _selectedDay.value;
@@ -71,7 +85,8 @@ class EventController extends GetxController {
   set selectedDay(DateTime dateTime) => this._selectedDay.value = dateTime;
   set selectedEvent(UltimateEvent event) => this._selectedEvent.value = event;
   set newEvent(UltimateEvent event) => this._newEvent.value = event;
-  set temporaryEventAttendees(List<String> attendees) => this._temporaryEventAttendees.value = attendees;
+  set temporaryEventAttendees(List<String> attendees) =>
+      this._temporaryEventAttendees.value = attendees;
   set selectedEvents(List<UltimateEvent> events) =>
       this._selectedEvents.value = events;
   set mapEvents(Map<DateTime, List<UltimateEvent>> mapEvents) =>
@@ -81,22 +96,25 @@ class EventController extends GetxController {
     UltimateEvent event = UltimateEvent(
       location: _newEvent.value.location,
       time: _newEvent.value.time,
-      attendees: _newEvent.value.attendees.isNull ? [] : _newEvent.value.attendees,
+      attendees:
+          _newEvent.value.attendees.isNull ? [] : _newEvent.value.attendees,
     );
     var doc = await _db.createEvent(event);
-    if (doc.runtimeType == DocumentReference) {
+    if (doc is DocumentReference) {
       print('event created');
-      UltimateEvent createdEvent = UltimateEvent.fromDocumentSnapshot(await doc.get());
-      _selectedEvent.value = createdEvent;
-      clearSelectedDay();
+      _selectedEvent.value =
+          UltimateEvent.fromDocumentSnapshot(await doc.get());
+      // clearSelectedDay();
       clearNewEvent();
-      UltimateEventDetailsScreenRouter.navigateAndPop(createdEvent.id);
+      UltimateEventDetailsScreenRouter.navigateAndPop(_selectedEvent.value.id);
+      Get.snackbar('Event Created', 'This event was successfully created',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   void updateUltimateEvent() async {
     List<String> oldAttendees = _selectedEvent.value.attendees.cast<String>();
-    _selectedEvent.value.attendees = _temporaryEventAttendees.cast<String>();
+    // _selectedEvent.value.attendees = _temporaryEventAttendees.cast<String>();
     print(_temporaryEventAttendees.length);
     print(oldAttendees.length);
     if (await _db.updateEvent(_selectedEvent.value)) {
@@ -121,7 +139,8 @@ class EventController extends GetxController {
 
       // update mapEvents here to re-order the events according to the time (if changed)
       if (timeChanged) {
-        DateTime mapEventsKeyDateTime = DateTime(_selectedEvent.value.time.year, _selectedEvent.value.time.month, _selectedEvent.value.time.day);
+        DateTime mapEventsKeyDateTime = DateTime(_selectedEvent.value.time.year,
+            _selectedEvent.value.time.month, _selectedEvent.value.time.day);
         List<UltimateEvent> events = mapEvents[mapEventsKeyDateTime];
         print('events.length: ${events.length}');
         events.sort((a, b) => a.time.compareTo(b.time));
@@ -129,29 +148,18 @@ class EventController extends GetxController {
       }
       Get.snackbar('Saved event', 'This event was edited successfully',
           snackPosition: SnackPosition.BOTTOM);
-    }
-    else
+    } else
       _selectedEvent.value.attendees = oldAttendees;
   }
 
   void deleteUltimateEvent() async {
-    if(await _db.deleteUltimateEvent(_selectedEvent.value)) {
-      clearSelectedEvent();
-      Get.snackbar('Event deleted', 'This event was successfully deleted', snackPosition: SnackPosition.BOTTOM);
+    if (await _db.deleteUltimateEvent(_selectedEvent.value)) {
+      print('Event deleted');
+      DateTime time = DateTime(_selectedEvent.value.time.year,
+          _selectedEvent.value.time.month, _selectedEvent.value.time.day);
       HomepageRouter.navigate();
-    }
-  }
-
-  Future<bool> _getUltimateEvent(String id) async {
-    DocumentReference docRef = _db.getUltimateEvent(id);
-    DocumentSnapshot doc = await docRef.get();
-    if (doc.exists) {
-      _selectedEvent.value = UltimateEvent.fromDocumentSnapshot(doc);
-      return true;
-    }
-    else {
-      Get.snackbar('Error', 'This event does not exist', snackPosition: SnackPosition.BOTTOM);
-      return false;
+      Get.snackbar('Event deleted', 'This event was successfully deleted',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -159,12 +167,12 @@ class EventController extends GetxController {
     DocumentReference docRef = _db.getUltimateEvent(id);
     DocumentSnapshot doc = await docRef.get();
     if (doc.exists) {
-      if (_selectedEvent.value.id == doc.id)
-        return true;
+      if (_selectedEvent.value.id == doc.id) return true;
       _selectedEvent.value = UltimateEvent.fromDocumentSnapshot(doc);
       return true;
     } else {
-      Get.snackbar('Error', 'This event does not exist', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error', 'This event does not exist',
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -207,9 +215,8 @@ class EventController extends GetxController {
     _mapEvents.value = <DateTime, List<UltimateEvent>>{};
   }
 
-  void clearSelectedEvent() => _selectedEvent.value = UltimateEvent();
-
   void clearSelectedDay() => _selectedDay.value = DateTime.now();
   void clearNewEvent() => _newEvent.value = UltimateEvent();
-  void clearTemporaryEventAttendees() => _temporaryEventAttendees.value = <String>[];
+  void clearTemporaryEventAttendees() =>
+      _temporaryEventAttendees.value = <String>[];
 }

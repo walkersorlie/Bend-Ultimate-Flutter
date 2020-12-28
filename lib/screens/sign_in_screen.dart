@@ -8,9 +8,9 @@ class SignInScreen extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double deviceHeight = MediaQuery.of(context).size.height;
-    double shortestSide = MediaQuery.of(context).size.shortestSide;
+    double deviceWidth = context.width;
+    double deviceHeight = context.height;
+    double shortestSide = context.mediaQueryShortestSide;
 
     return Scaffold(
       appBar: AppBar(

@@ -57,34 +57,35 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
   Widget _buildAppBar() {
     return AppBar(
       actions: <Widget>[
-        Get.find<AuthController>().user != null
-            ? IconButton(
-          icon: Icon(Icons.edit),
-          tooltip: 'Edit event',
-          onPressed: () {
-            controller.clearTemporaryEventAttendees();
-            controller.temporaryEventAttendees =
-            controller.selectedEvent.attendees.isNull
-                ? []
-                : controller.selectedEvent.attendees
-                .cast<String>();
-            UltimateEventEditScreenRouter.navigate(
-                controller.selectedEvent.id);
-          },
-        )
-            : IconButton(
-          icon: Icon(Icons.login),
-          tooltip: 'Sign in',
-          onPressed: () => SignInScreenRouter.navigate(),
-        )
+        GetX(builder: (_) {
+          return Get.find<AuthController>().user != null
+              ? IconButton(
+                  icon: Icon(Icons.edit),
+                  tooltip: 'Edit event',
+                  onPressed: () {
+                    controller.clearTemporaryEventAttendees();
+                    controller.temporaryEventAttendees =
+                        controller.selectedEvent.attendees.isNull
+                            ? []
+                            : controller.selectedEvent.attendees.cast<String>();
+                    UltimateEventEditScreenRouter.navigate(
+                        controller.selectedEvent.id);
+                  },
+                )
+              : IconButton(
+                  icon: Icon(Icons.login),
+                  tooltip: 'Sign in',
+                  onPressed: () => SignInScreenRouter.navigate(),
+                );
+        }),
       ],
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double deviceHeight = MediaQuery.of(context).size.height;
-    double shortestSide = MediaQuery.of(context).size.shortestSide;
+    double deviceWidth = Get.width;
+    double deviceHeight = Get.height;
+    double shortestSide = context.mediaQueryShortestSide;
 
     return Column(
       children: [
@@ -100,7 +101,7 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
               children: [
                 Center(
                   child: Obx(
-                        () => Text(
+                    () => Text(
                       "Location: ${controller.selectedEvent.location}",
                       style: TextStyle().copyWith(fontSize: 40),
                     ),
@@ -108,7 +109,7 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
                 ),
                 Center(
                   child: Obx(
-                        () => Text(
+                    () => Text(
                       "Date and time: ${DateFormat.yMd().add_jm().format(controller.selectedEvent.time).toString()}",
                       style: TextStyle().copyWith(fontSize: 25),
                     ),
@@ -120,8 +121,7 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
                           horizontal: 10.0, vertical: 20.0),
                       child: Text(
                         "Attendees:",
-                        style:
-                        TextStyle().copyWith(fontSize: 20),
+                        style: TextStyle().copyWith(fontSize: 20),
                       )),
                 ),
               ],
@@ -134,14 +134,14 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
               alignment: Alignment.topCenter,
               child: shortestSide < 600
                   ? Obx(
-                    () => _displayAttendeesList(context),
-              )
-                  : FractionallySizedBox(
-                widthFactor: 0.6,
-                child: Obx(
                       () => _displayAttendeesList(context),
-                ),
-              )),
+                    )
+                  : FractionallySizedBox(
+                      widthFactor: 0.6,
+                      child: Obx(
+                        () => _displayAttendeesList(context),
+                      ),
+                    )),
         ),
       ],
     );
@@ -159,15 +159,15 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
           ],
           title: 'Add name',
         );
-        controller
-            .selectedEventAttendeesAdd(names.elementAt(0));
+        if (!names.isNullOrBlank) controller.selectedEventAttendeesAdd(names.elementAt(0));
       },
     );
   }
 
   Widget _displayAttendeesList(BuildContext context) {
     return !controller.selectedEvent.attendees.isNullOrBlank
-        ? controller.selectedEvent.attendees.length <= 8 || MediaQuery.of(context).size.shortestSide < 600
+        ? controller.selectedEvent.attendees.length <= 8 ||
+                context.mediaQueryShortestSide < 600
             ? Container(
                 child: FractionallySizedBox(
                   widthFactor: 0.5,
@@ -193,7 +193,10 @@ class UltimateEventDetailsScreen extends GetView<EventController> {
                 ),
               )
             : _buildAttendeesRow()
-        : Text('Nobody is coming :(');
+        : Align(
+            alignment: Alignment.topCenter,
+            child: Text('Nobody is coming :('),
+          );
   }
 
   Widget _buildAttendeesRow() {

@@ -1,6 +1,7 @@
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:bend_ultimate_flutter/controllers/auth_controller.dart';
 import 'package:bend_ultimate_flutter/controllers/event_controller.dart';
+import 'package:bend_ultimate_flutter/themes/base_theme.dart';
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,7 +29,8 @@ class UltimateEventEditScreen extends GetView<EventController> {
                             centerTitle: true,
                           ),
                           body: _buildBody(context),
-                          floatingActionButton: _buildFloatingActionButton(context),
+                          floatingActionButton:
+                              _buildFloatingActionButton(context),
                         )
                       : _buildEventDoesNotExist()
                   : snapshot.hasError
@@ -60,9 +62,8 @@ class UltimateEventEditScreen extends GetView<EventController> {
   }
 
   Widget _buildBody(BuildContext context) {
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double deviceHeight = MediaQuery.of(context).size.height;
-    double shortestSide = MediaQuery.of(context).size.shortestSide;
+    double deviceWidth = context.width;
+    double shortestSide = context.mediaQueryShortestSide;
 
     return Form(
       key: _eventFormKey,
@@ -72,20 +73,57 @@ class UltimateEventEditScreen extends GetView<EventController> {
             flex: 0,
             child: Container(
               margin: EdgeInsets.only(top: 25),
+              constraints: BoxConstraints(
+                maxWidth:
+                    shortestSide < 650 ? deviceWidth * 0.7 : deviceWidth * 0.35,
+              ),
               child: Column(
                 children: [
-                  Center(
-                    child: TextFormField(
-                      decoration: InputDecoration(labelText: 'Location'),
-                      initialValue: controller.selectedEvent.location,
-                      onSaved: (location) =>
-                          controller.selectedEvent.location = location,
-                      validator: (value) =>
-                          value.isEmpty ? 'Please enter a location' : null,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: TextFormField(
+                            decoration: InputDecoration(labelText: 'Location'),
+                            initialValue: controller.selectedEvent.location,
+                            onSaved: (location) =>
+                                controller.selectedEvent.location = location,
+                            validator: (value) => value.isEmpty
+                                ? 'Please enter a location'
+                                : null,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 15,
+                      ),
+                      OutlinedButton(
+                        child: Text('Save Event'),
+                        onPressed: () {
+                          if (_eventFormKey.currentState.validate()) {
+                            _eventFormKey.currentState.save();
+                            controller.updateUltimateEvent();
+                          }
+                        },
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      OutlinedButton(
+                        child: Text('Delete Event'),
+                        style: BaseTheme.invertedOutlinedButton,
+                        onPressed: () => controller.deleteUltimateEvent(),
+                      ),
+                    ],
                   ),
-                  Center(
-                    child: _dateTimeField(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: _dateTimeField(),
+                        ),
+                      ),
+                    ],
                   ),
                   Center(
                     child: Container(
@@ -117,15 +155,6 @@ class UltimateEventEditScreen extends GetView<EventController> {
                     ),
             ),
           ),
-          ElevatedButton(
-            child: Text('Save'),
-            onPressed: () {
-              if (_eventFormKey.currentState.validate()) {
-                _eventFormKey.currentState.save();
-                controller.updateUltimateEvent();
-              }
-            },
-          ),
         ],
       ),
     );
@@ -136,25 +165,23 @@ class UltimateEventEditScreen extends GetView<EventController> {
       tooltip: 'Add name',
       child: Icon(Icons.add),
       onPressed: () async {
-        final List<String> names =
-        await showTextInputDialog(
+        final List<String> names = await showTextInputDialog(
           context: context,
           textFields: const [
-            DialogTextField(hintText: 'Name'),
+            DialogTextField(hintText: 'Name',),
           ],
           title: 'Add name',
         );
         // controller.updateUltimateEventAttendeesObservableAdd(names.elementAt(0));
-        controller.temporaryEventAttendees
-            .add(names.elementAt(0));
+        if (!names.isNullOrBlank) controller.temporaryEventAttendees.add(names.elementAt(0));
       },
     );
   }
 
   Widget _displayAttendeesList(BuildContext context) {
     return !controller.temporaryEventAttendees.isNullOrBlank
-        ? controller.selectedEvent.attendees.length <= 8 ||
-                MediaQuery.of(context).size.shortestSide < 600
+        ? controller.temporaryEventAttendees.length <= 8 ||
+                context.mediaQueryShortestSide < 600
             ? Container(
                 child: FractionallySizedBox(
                   widthFactor: 0.5,
@@ -179,7 +206,10 @@ class UltimateEventEditScreen extends GetView<EventController> {
                 ),
               )
             : _buildAttendeesRow()
-        : Text('Nobody is coming :(');
+        : Align(
+            alignment: Alignment.topCenter,
+            child: Text('Nobody is coming :('),
+          );
   }
 
   Widget _buildAttendeesRow() {

@@ -22,4 +22,17 @@ class UltimateEvent {
     location = doc['location'];
     attendees = doc['attendees'];
   }
+
+  @override
+  bool operator == (other) {
+    return other is UltimateEvent && other.id == this.id && other.time == this.time;
+  }
+
+  @override
+  int get hashCode => this.id.hashCode ^ this.location.hashCode ^ this.time.hashCode;
+
+  @override
+  String toString() {
+    return 'id: ${this.id}, time: ${this.time}, location: ${this.location}';
+  }
 }

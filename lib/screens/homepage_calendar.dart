@@ -29,7 +29,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   CalendarController _calendarController;
   final EventController eventController = Get.find<EventController>();
   final AuthController authController = Get.find<AuthController>();
-  String viewFormat;
   int _selectedIndex = 0;
 
   @override
@@ -42,9 +41,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     _animationController.forward();
 
     _calendarController = CalendarController();
-    // _calendarController.setCalendarFormat(CalendarFormat.month);
-
-    // viewFormat = _calendarController.calendarFormat.toString();
   }
 
   @override
@@ -55,6 +51,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
 
   void _onDaySelected(DateTime day, List events) {
     print('CALLBACK: _onDaySelected');
+    eventController.selectedDay = day;
     setState(() {
       events.isEmpty
           ? eventController.selectedEvents = <UltimateEvent>[]
@@ -71,7 +68,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onCalendarCreated');
 
-    _calendarController.setSelectedDay(DateTime.now());
+    _calendarController.setSelectedDay(eventController.selectedDay);
   }
 
   void _bottomNavItemTapped(int index) {
@@ -82,7 +79,7 @@ class _HomepageCalendarState extends State<HomepageCalendar>
 
   @override
   Widget build(BuildContext context) {
-    double shortestSide = MediaQuery.of(context).size.shortestSide;
+    double shortestSide = context.mediaQueryShortestSide;
     bool _useMobileLayout = shortestSide < 600;
 
     return _useMobileLayout
@@ -140,7 +137,11 @@ class _HomepageCalendarState extends State<HomepageCalendar>
               children: <Widget>[
                 _buildTableCalendar(),
                 if (eventController.selectedEvents.isNotEmpty)
-                  Expanded(child: _buildEventList()),
+                  Expanded(
+                    child: Obx(
+                      () => _buildEventList(),
+                    ),
+                  ),
               ],
             )
           : Column(
@@ -194,19 +195,29 @@ class _HomepageCalendarState extends State<HomepageCalendar>
                           textFields: [
                             DialogTextField(
                               hintText: 'First Name (required)',
-                              validator: (value) => value.isEmpty ? 'Please enter a last name' : null,
+                              validator: (value) => value.isEmpty
+                                  ? 'Please enter a last name'
+                                  : null,
                             ),
                             DialogTextField(
                               hintText: 'Last Name (required)',
-                              validator: (value) => value.isEmpty ? 'Please enter a last name' : null,
+                              validator: (value) => value.isEmpty
+                                  ? 'Please enter a last name'
+                                  : null,
                             ),
                             DialogTextField(
                               hintText: 'Email Address (optional)',
-                              validator: (value) => value.isNotEmpty && !EmailValidator.validate(value) ? 'Not a valid email address' : null,
+                              validator: (value) => value.isNotEmpty &&
+                                      !EmailValidator.validate(value)
+                                  ? 'Not a valid email address'
+                                  : null,
                             ),
                             DialogTextField(
                               hintText: 'Phone Number (optional)',
-                              validator: (value) => value.isNotEmpty && !_validatePhoneNumber(value) ? 'Not a valid phone number' : null,
+                              validator: (value) => value.isNotEmpty &&
+                                      !_validatePhoneNumber(value)
+                                  ? 'Not a valid phone number'
+                                  : null,
                             ),
                           ],
                           title: 'Add name',
@@ -238,7 +249,9 @@ class _HomepageCalendarState extends State<HomepageCalendar>
             flex: 3,
             child: Align(
               child: eventController.selectedEvents.isNotEmpty
-                  ? _buildEventList()
+                  ? Obx(
+                      () => _buildEventList(),
+                    )
                   : Container(
                       child: Text('No events today'),
                     ),
@@ -251,7 +264,8 @@ class _HomepageCalendarState extends State<HomepageCalendar>
   }
 
   bool _validatePhoneNumber(String number) {
-    final _regex = RegExp(r'\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$');
+    final _regex = RegExp(
+        r'\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$');
     return _regex.hasMatch(number) ? true : false;
   }
 
@@ -260,7 +274,6 @@ class _HomepageCalendarState extends State<HomepageCalendar>
       calendarController: _calendarController,
       events: eventController.mapEvents,
       initialCalendarFormat: CalendarFormat.month,
-      initialSelectedDay: DateTime.now(),
       formatAnimation: FormatAnimation.slide,
       startingDayOfWeek: StartingDayOfWeek.sunday,
       availableGestures: AvailableGestures.all,
@@ -422,21 +435,21 @@ class _HomepageCalendarState extends State<HomepageCalendar>
 
   Widget _displayContacts() {
     return !authController.users.isNullOrBlank
-    ? ListView(
-        children: authController.users
-            .map(
-              (user) => Container(
-                child: Card(
-                  child: ListTile(
-                    title: Text('${user.firstName} ${user.lastName}'),
-                    subtitle: !user.phoneNumber.isNull
-                        ? Text(user.phoneNumber)
-                        : Container(),
+        ? ListView(
+            children: authController.users
+                .map(
+                  (user) => Container(
+                    child: Card(
+                      child: ListTile(
+                        title: Text('${user.firstName} ${user.lastName}'),
+                        subtitle: !user.phoneNumber.isNull
+                            ? Text(user.phoneNumber)
+                            : Container(),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )
-            .toList())
+                )
+                .toList())
         : Container();
   }
 
