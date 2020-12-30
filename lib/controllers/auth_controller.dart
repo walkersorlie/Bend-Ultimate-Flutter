@@ -1,6 +1,7 @@
 import 'package:bend_ultimate_flutter/models/custom_user.dart';
 import 'package:bend_ultimate_flutter/routers/homepage_router.dart';
 import 'package:bend_ultimate_flutter/services/firestore_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,7 +15,6 @@ class AuthController extends GetxController {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-
   @override
   void onInit() {
     _firebaseUser.bindStream(_auth.authStateChanges());
@@ -25,13 +25,23 @@ class AuthController extends GetxController {
   void _usersStreamListen() async {
     Stream stream = _db.getUsersCollectionStream();
     stream.listen((querySnapshot) {
-      List<CustomUser> updatedUsers = [];
-      if (!querySnapshot.metadata.hasPendingWrites) {
-        querySnapshot.docs
-            .map((user) => CustomUser.fromQueryDocumentSnapshot(user))
-            .forEach((user) => updatedUsers.add(user));
-        this.users = updatedUsers;
-      }
+      querySnapshot.docChanges
+          .forEach((documentChange) {
+        if (documentChange.type == DocumentChangeType.added) {
+          CustomUser newUser = CustomUser.fromDocumentSnapshot(documentChange.doc);
+          _users.add(newUser);
+        }
+        if (documentChange.type == DocumentChangeType.modified) {
+          CustomUser updateUser = CustomUser.fromDocumentSnapshot(documentChange.doc);
+          _users[_users.indexWhere((element) => element.id == updateUser.id)] =
+              updateUser;
+        }
+        if (documentChange.type == DocumentChangeType.removed) {
+          CustomUser removeUser = CustomUser.fromDocumentSnapshot(documentChange.doc);
+          _users.remove(removeUser);
+        }
+      });
+      _users.sort((a, b) => a.lastName.toLowerCase().compareTo(b.lastName.toLowerCase()));
     });
   }
 
@@ -78,7 +88,8 @@ class AuthController extends GetxController {
       _isLoggedIn.value = false;
     } catch (e) {
       print(e);
-      Get.snackbar("Error signing out", e.message, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error signing out", e.message,
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -92,8 +103,25 @@ class AuthController extends GetxController {
     if (await _db.createUser(newUser)) {
       Get.snackbar('Contact Added', 'Contact added successfully',
           snackPosition: SnackPosition.BOTTOM);
-
     }
+  }
+
+  void updateUser(String id, List<String> fields) async {
+    CustomUser updateUser = CustomUser(
+      fields[0].trim(),
+      fields[1].trim(),
+      id: id,
+      emailAddress: fields[2].isNotEmpty ? fields[2] : null,
+      phoneNumber: fields[3].isNotEmpty ? fields[3] : null,
+    );
+    if (await _db.updateUser(updateUser)) {
+      Get.snackbar('Updated contact', 'Contact was updated successfully', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void deleteUser(String id) async {
+    if (await _db.deleteUser(id))
+      Get.snackbar('Contact deleted', 'Contact deleted successfully', snackPosition: SnackPosition.BOTTOM);
   }
 
   void clearTextControllers() {

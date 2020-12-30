@@ -24,9 +24,11 @@ class UltimateEvent {
   }
 
   @override
-  bool operator == (other) {
-    return other is UltimateEvent && other.id == this.id && other.time == this.time;
-  }
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UltimateEvent &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => this.id.hashCode ^ this.location.hashCode ^ this.time.hashCode;

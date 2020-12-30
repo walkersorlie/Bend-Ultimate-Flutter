@@ -27,9 +27,6 @@ class EventController extends GetxController {
       // print('querySnapshot.size, _mapEventsListen(): ' + querySnapshot.size.toString());
       // print('hasPendingWrites: ${querySnapshot.metadata.hasPendingWrites}');
       querySnapshot.docChanges.forEach((document) {
-        print('document.type: ${document.type}');
-        print(
-            'documents pendingWrites: ${document.doc.metadata.hasPendingWrites}');
         if (document.type == DocumentChangeType.added) {
           UltimateEvent event =
               UltimateEvent.fromDocumentSnapshot(document.doc);
@@ -68,11 +65,11 @@ class EventController extends GetxController {
           eventsOnDay.remove(event);
         }
       });
-    });
 
-    // sort all events lists
-    _mapEvents.forEach((date, eventsList) =>
-        eventsList.sort((a, b) => a.time.compareTo(b.time)));
+      // sort all events lists
+      _mapEvents.forEach((date, eventsList) =>
+          eventsList.sort((a, b) => a.time.compareTo(b.time)));
+    });
   }
 
   DateTime get selectedDay => _selectedDay.value;

@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-
   Future<dynamic> createEvent(UltimateEvent event) async {
     try {
       DocumentReference doc = await _firestore.collection('events').add({
@@ -17,18 +16,24 @@ class FirestoreService {
       return doc;
     } catch (e) {
       print(e);
-      Get.snackbar("Error creating event", e.message, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error creating event", e.message,
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
 
   Future<bool> updateEvent(UltimateEvent event) async {
     try {
-      await _firestore.collection('events').doc(event.id).update({'location' : event.location, 'time': event.time, 'attendees': event.attendees});
+      await _firestore.collection('events').doc(event.id).update({
+        'location': event.location,
+        'time': event.time,
+        'attendees': event.attendees
+      });
       return true;
     } catch (e) {
       print(e);
-      Get.snackbar('Error editing event', e.message, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error editing event', e.message,
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -39,7 +44,8 @@ class FirestoreService {
       return true;
     } catch (e) {
       print(e);
-      Get.snackbar('Error deleting event', e.message, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error deleting event', e.message,
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -48,19 +54,25 @@ class FirestoreService {
     return _firestore.collection('events').doc(id);
   }
 
-  Future<bool> addEventAttendees(UltimateEvent event, List<dynamic> attendees) async {
+  Future<bool> addEventAttendees(
+      UltimateEvent event, List<dynamic> attendees) async {
     try {
-      await _firestore.collection('events').doc(event.id).update({'attendees': FieldValue.arrayUnion(attendees)});
+      await _firestore
+          .collection('events')
+          .doc(event.id)
+          .update({'attendees': FieldValue.arrayUnion(attendees)});
       return true;
-      } catch (e) {
+    } catch (e) {
       print(e);
       return false;
-      }
+    }
   }
 
   Future<bool> removeEventAttendees(UltimateEvent event, String name) async {
     try {
-      await _firestore.collection('events').doc(event.id).update({'attendees': FieldValue.arrayRemove([name])});
+      await _firestore.collection('events').doc(event.id).update({
+        'attendees': FieldValue.arrayRemove([name])
+      });
       return true;
     } catch (e) {
       print(e);
@@ -92,9 +104,10 @@ class FirestoreService {
   }
 
   Stream<QuerySnapshot> getEventsCollectionStream() {
-    return _firestore.collection('events').snapshots(includeMetadataChanges: true);
+    return _firestore
+        .collection('events')
+        .snapshots(includeMetadataChanges: true);
   }
-
 
   Future<bool> createUser(CustomUser user) async {
     try {
@@ -107,23 +120,44 @@ class FirestoreService {
       return true;
     } catch (e) {
       print(e);
-      Get.snackbar("Error creating user", e.message, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error creating user", e.message,
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
 
-  Future<bool> deleteUser(CustomUser user) async {
+  Future<bool> updateUser(CustomUser user) async {
     try {
-      await _firestore.collection('users').doc(user.id).delete();
+      await _firestore.collection('users').doc(user.id).update({
+        'first_name': user.firstName,
+        'last_name': user.lastName,
+        'email_address': user.emailAddress,
+        'phone_number': user.phoneNumber
+      });
       return true;
     } catch (e) {
       print(e);
-      Get.snackbar('Error deleting user', e.message, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error updating user', e.message,
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+  }
+
+  Future<bool> deleteUser(String id) async {
+    try {
+      await _firestore.collection('users').doc(id).delete();
+      return true;
+    } catch (e) {
+      print(e);
+      Get.snackbar('Error deleting user', e.message,
+          snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
 
   Stream<QuerySnapshot> getUsersCollectionStream() {
-    return _firestore.collection('users').orderBy('last_name').snapshots(includeMetadataChanges: true);
+    return _firestore
+        .collection('users')
+        .snapshots(includeMetadataChanges: true);
   }
 }

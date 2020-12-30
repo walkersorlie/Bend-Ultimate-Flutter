@@ -146,9 +146,19 @@ class _HomepageCalendarState extends State<HomepageCalendar>
             )
           : Column(
               children: [
+                Flexible(
+                  flex: 1,
+                  child: ListTile(
+                    title: Text(
+                      'Contacts',
+                      style: TextStyle().copyWith(fontSize: 20),
+                    ),
+                    trailing: _addContact(context),
+                  ),
+                ),
                 Expanded(
                   child: Obx(
-                    () => _displayContacts(),
+                    () => _displayContacts(context),
                   ),
                 ),
               ],
@@ -182,54 +192,16 @@ class _HomepageCalendarState extends State<HomepageCalendar>
               children: [
                 Flexible(
                   child: ListTile(
-                    leading: Text(
+                    title: Text(
                       'Contacts',
                       style: TextStyle().copyWith(fontSize: 20),
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.add),
-                      tooltip: 'Add contact',
-                      onPressed: () async {
-                        final List<String> fields = await showTextInputDialog(
-                          context: context,
-                          textFields: [
-                            DialogTextField(
-                              hintText: 'First Name (required)',
-                              validator: (value) => value.isEmpty
-                                  ? 'Please enter a last name'
-                                  : null,
-                            ),
-                            DialogTextField(
-                              hintText: 'Last Name (required)',
-                              validator: (value) => value.isEmpty
-                                  ? 'Please enter a last name'
-                                  : null,
-                            ),
-                            DialogTextField(
-                              hintText: 'Email Address (optional)',
-                              validator: (value) => value.isNotEmpty &&
-                                      !EmailValidator.validate(value)
-                                  ? 'Not a valid email address'
-                                  : null,
-                            ),
-                            DialogTextField(
-                              hintText: 'Phone Number (optional)',
-                              validator: (value) => value.isNotEmpty &&
-                                      !_validatePhoneNumber(value)
-                                  ? 'Not a valid phone number'
-                                  : null,
-                            ),
-                          ],
-                          title: 'Add name',
-                        );
-                        authController.createUser(fields);
-                      },
-                    ),
+                    trailing: _addContact(context),
                   ),
                 ),
                 Expanded(
                   child: Obx(
-                    () => _displayContacts(),
+                    () => _displayContacts(context),
                   ),
                 ),
               ],
@@ -433,7 +405,47 @@ class _HomepageCalendarState extends State<HomepageCalendar>
     );
   }
 
-  Widget _displayContacts() {
+  Widget _addContact(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.add),
+      tooltip: 'Add contact',
+      onPressed: () async {
+        final List<String> fields = await showTextInputDialog(
+          context: context,
+          textFields: [
+            DialogTextField(
+              hintText: 'First Name (required)',
+              validator: (value) =>
+                  value.isEmpty ? 'Please enter a last name' : null,
+            ),
+            DialogTextField(
+              hintText: 'Last Name (required)',
+              validator: (value) =>
+                  value.isEmpty ? 'Please enter a last name' : null,
+            ),
+            DialogTextField(
+              hintText: 'Email Address (optional)',
+              validator: (value) =>
+                  value.isNotEmpty && !EmailValidator.validate(value)
+                      ? 'Not a valid email address'
+                      : null,
+            ),
+            DialogTextField(
+              hintText: 'Phone Number (optional)',
+              validator: (value) =>
+                  value.isNotEmpty && !_validatePhoneNumber(value)
+                      ? 'Not a valid phone number'
+                      : null,
+            ),
+          ],
+          title: 'Add name',
+        );
+        if (!fields.isNullOrBlank) authController.createUser(fields);
+      },
+    );
+  }
+
+  Widget _displayContacts(BuildContext context) {
     return !authController.users.isNullOrBlank
         ? ListView(
             children: authController.users
@@ -445,6 +457,76 @@ class _HomepageCalendarState extends State<HomepageCalendar>
                         subtitle: !user.phoneNumber.isNull
                             ? Text(user.phoneNumber)
                             : Container(),
+                        trailing: PopupMenuButton(
+                          onSelected: (value) async {
+                            if (value == 1) {
+                              final List<String> fields =
+                                  await showTextInputDialog(
+                                title: 'Edit Contact',
+                                context: context,
+                                textFields: [
+                                  DialogTextField(
+                                    initialText: user.firstName,
+                                    hintText: 'First Name (required)',
+                                    validator: (value) => value.isEmpty
+                                        ? 'Please enter a last name'
+                                        : null,
+                                  ),
+                                  DialogTextField(
+                                    initialText: user.lastName,
+                                    hintText: 'Last Name (required)',
+                                    validator: (value) => value.isEmpty
+                                        ? 'Please enter a last name'
+                                        : null,
+                                  ),
+                                  DialogTextField(
+                                    initialText: user.emailAddress,
+                                    hintText: 'Email Address (optional)',
+                                    validator: (value) => value.isNotEmpty &&
+                                            !EmailValidator.validate(value)
+                                        ? 'Not a valid email address'
+                                        : null,
+                                  ),
+                                  DialogTextField(
+                                    initialText: user.phoneNumber,
+                                    hintText: 'Phone Number (optional)',
+                                    validator: (value) => value.isNotEmpty &&
+                                            !_validatePhoneNumber(value)
+                                        ? 'Not a valid phone number'
+                                        : null,
+                                  ),
+                                ],
+                              );
+                              if (!fields.isNullOrBlank)
+                                authController.updateUser(user.id, fields);
+                            }
+                            if (value == 2) {
+                              final result = await showOkCancelAlertDialog(
+                                context: context,
+                                title: 'Delete contact',
+                                message:
+                                    'Are you sure you want to delete this contact',
+                                okLabel: 'Yes',
+                                cancelLabel: 'No',
+                              );
+                              if (result == OkCancelResult.ok) authController.deleteUser(user.id);
+                            }
+                          },
+                          itemBuilder: (context) {
+                            List<PopupMenuItem> items = [];
+                            items.add(PopupMenuItem(
+                              value: 1,
+                              child: Icon(Icons.edit),
+                            ));
+
+                            if (authController.user != null)
+                              items.add(PopupMenuItem(
+                                value: 2,
+                                child: Icon(Icons.delete),
+                              ));
+                            return items;
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -470,13 +552,11 @@ class _HomepageCalendarState extends State<HomepageCalendar>
               child: ListTile(
                 title: Center(child: Text(event.location)),
                 subtitle: Center(
-                    child: Text(DateFormat.yMd()
-                        .add_jm()
-                        .format(event.time)
-                        .toString())),
+                  child: Text(
+                      DateFormat.yMd().add_jm().format(event.time).toString()),
+                ),
                 onTap: () => {
                   eventController.selectedEvent = event,
-                  // Get.toNamed('/events/details/${event.id}', arguments: event.id),
                   UltimateEventDetailsScreenRouter.navigate(event.id),
                 },
               ),

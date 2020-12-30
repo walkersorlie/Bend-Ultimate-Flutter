@@ -15,6 +15,14 @@ class SignInScreen extends GetView<AuthController> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Sign In'),
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              controller.clearTextControllers();
+              Get.back();
+            },
+        ),
       ),
       body: shortestSide < 600
           ? Align(
